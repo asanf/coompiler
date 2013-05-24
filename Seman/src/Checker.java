@@ -71,7 +71,11 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(Formals formal_list, Object table) {
-		// TODO Auto-generated method stub
+		Enumeration formals=formal_list.getElements();
+		while(formals.hasMoreElements()){
+			formalc f=(formalc)formals.nextElement();
+			visit(f,table);
+		}
 		return null;
 	}
 
@@ -122,7 +126,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(formalc formal, Object table) {
-		// TODO Auto-generated method stub
+		//qui la visita deve occuparsi solo di aggiungere il type 
 		return null;
 	}
 
