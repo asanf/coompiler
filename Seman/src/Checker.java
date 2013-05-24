@@ -92,7 +92,7 @@ public class Checker implements Visitor {
 		// TODO Auto-generated method stub
 		Enumeration cases = case_list.getElements();
 		while(cases.hasMoreElements()){
-			visit((typcase)cases.nextElement(),table);
+			visit((branch)cases.nextElement(),table);
 		}
 		return null;
 	}
@@ -175,7 +175,13 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(branch b, Object table) {
-		// TODO Auto-generated method stub
+		
+		SymbolTable scope = (SymbolTable) table;
+		
+		scope.enterScope();
+		
+		scope.addId(b.name, SymbolTable.Kind.OBJECT, b.type_decl);
+		visit(b.expr, scope);
 		
 		return null;
 	}
@@ -198,6 +204,7 @@ public class Checker implements Visitor {
 		/*
 		 * effettuare controllo con la firma 
 		 */
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -222,7 +229,8 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(typcase tc, Object table) {
-		// TODO Auto-generated method stub
+		visit(tc.expr, table);
+		visit(tc.cases, table);
 		
 		return null;
 	}
