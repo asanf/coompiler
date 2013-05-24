@@ -309,66 +309,115 @@ public class Checker implements Visitor {
 		// TODO Auto-generated method stub
 		visit(e.e1,table);
 		visit(e.e2,table);
+		AbstractSymbol t1 = e.e1.get_type();
+		AbstractSymbol t2 = e.e2.get_type();
+		if( t1.equals(TreeConstants.Int) || 
+			t1.equals(TreeConstants.Str) ||
+			t1.equals(TreeConstants.Bool)||
+			t2.equals(TreeConstants.Int) ||
+			t2.equals(TreeConstants.Str) ||
+			t2.equals(TreeConstants.Bool))
+			
+			if(!t1.equals(t2)){
+				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
+				return e.set_type(TreeConstants.No_type);
+			}
+			
+		if(!(cTable.isAncestor(t1, t2) || cTable.isAncestor(t2, t1))){
+			//TODO controllare se è vero
+			//TODO errore se sono diversi
+			cTable.semantError().append("");
+		}
 		return null;
 	}
 
 	@Override
 	public Object visit(leq e, Object table) {
-		// TODO Auto-generated method stub
+		
 		visit(e.e1,table);
 		visit(e.e2,table);
-		return null;
+		
+		if(!e.e1.get_type().equals(TreeConstants.Int) ||
+			!e.e2.get_type().equals(TreeConstants.Int)){
+			cTable.semantError().append("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
+			return e.set_type(TreeConstants.No_type);
+		}
+		
+		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(comp e, Object table) {
-		visit(e.e1, table);		
-		return null;
+		Object result = visit(e.e1, table);
+		e.set_type(e.e1.get_type());
+		return result;
 	}
 
 	@Override
 	public Object visit(int_const i, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		i.set_type(TreeConstants.Int);
+		return cTable.lookup(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(bool_const b, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		b.set_type(TreeConstants.Bool);
+		return cTable.lookup(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(string_const s, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		s.set_type(TreeConstants.Str);
+		return cTable.lookup(TreeConstants.Str);
 	}
 
 	@Override
 	public Object visit(new_ n, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		/*
+		 * Controllo che la classe esista, 
+		 * in caso positivo la restituisco al genitore 
+		 * per controllare se il tipo è compatibile
+		 */
+		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
+			n.set_type(TreeConstants.SELF_TYPE);
+			return TreeConstants.SELF_TYPE;
+		}
+		
+		Object result = cTable.lookup(n.type_name);
+		
+		if(result == null){
+			cTable.semantError().append("Line " + n.lineNumber + ": Il tipo " + n.type_name + " non esiste.");
+			return n.set_type(TreeConstants.No_type);
+		}
+		
+		n.set_type(((class_c)result).name);
+		return result;
 	}
 
 	@Override
 	public Object visit(isvoid iv, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		visit(iv.e1, table);
+		iv.set_type(TreeConstants.Bool);
+		return cTable.lookup(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(no_expr ne, Object table) {
-		// TODO Auto-generated method stub
-		return null;
+		return TreeConstants.No_type;
 	}
 
 	@Override
 	public Object visit(object o, Object table) {
+		
 		SymbolTable scope = (SymbolTable) table;
-		if(scope.lookup(o.name, SymbolTable.Kind.OBJECT) == null){
+		class_c result = (class_c)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
+		if(result == null){
 			cTable.semantError().append(o.name + " non è stato dichiarato.");
+			return o.set_type(TreeConstants.No_type);
+		} else {
+			o.set_type(result.name);
 		}
-		return null;
+		return result;
 	}
 
 	private ClassTable cTable;
