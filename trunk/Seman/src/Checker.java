@@ -32,8 +32,6 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Class_ cl, Object table) {
 		
-		
-		
 		return null;
 	}
 
@@ -145,7 +143,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(static_dispatch sd, Object table) {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
@@ -182,7 +180,8 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(block b, Object table) {
-		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable)table;
+		visit(b.body, scope);
 		return null;
 	}
 
@@ -244,7 +243,8 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(lt e, Object table) {
-		// TODO Auto-generated method stub
+		visit(e.e1, table);
+		visit(e.e2, table);
 		visit(e.e1,table);
 		visit(e.e2,table);
 		return null;
@@ -268,8 +268,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(comp e, Object table) {
-		// TODO Auto-generated method stub
-		
+		visit(e.e1, table);		
 		return null;
 	}
 
@@ -311,7 +310,10 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(object o, Object table) {
-		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		if(scope.lookup(o.name, SymbolTable.Kind.OBJECT) == null){
+			cTable.semantError().append(o.name + " non è stato dichiarato.");
+		}
 		return null;
 	}
 
