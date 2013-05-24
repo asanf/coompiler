@@ -5,7 +5,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(programc program, Object table) {
-		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
