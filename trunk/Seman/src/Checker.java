@@ -112,13 +112,58 @@ public class Checker implements Visitor {
 		return null;
 	}
 
-	public Object visit(Expression expr, Object table){
+	public Object visit(Expression e, Object table){
+		if(e instanceof assign)
+			visit((assign)e,table);
+		else if(e instanceof static_dispatch)
+			visit((static_dispatch)e,table);
+		else if(e instanceof dispatch)
+			visit((dispatch)e,table);
+		else if(e instanceof cond)
+			visit((cond)e,table);
+		else if(e instanceof loop)
+			visit((loop)e,table);
+		else if(e instanceof typcase)
+			visit((typcase)e,table);
+		else if(e instanceof block)
+			visit((block)e,table);
+		else if(e instanceof let)
+			visit((let)e,table);
+		else if(e instanceof plus)
+			visit((plus)e,table);
+		else if(e instanceof sub)
+			visit((sub)e,table);
+		else if(e instanceof divide)
+			visit((divide)e,table);
+		else if(e instanceof neg)
+			visit((neg)e,table);
+		else if(e instanceof lt)
+			visit((lt)e,table);
+		else if(e instanceof eq)
+			visit((eq)e,table);
+		else if(e instanceof leq)
+			visit((leq)e,table);
+		else if(e instanceof int_const)
+			visit((int_const)e,table);
+		else if(e instanceof bool_const)
+			visit((bool_const)e,table);
+		else if(e instanceof string_const)
+			visit((string_const)e,table);
+		else if(e instanceof new_)
+			visit((new_)e,table);
+		else if(e instanceof isvoid)
+			visit((isvoid)e,table);
+		else if(e instanceof no_expr)
+			visit((no_expr)e,table);
+		else if(e instanceof object)
+			visit((object)e,table);
+		
 		return null;
 	}
 	
 	@Override
 	public Object visit(attr a, Object table) {
-		// TODO Auto-generated method stub
+		visit(a.init,table);
 		return null;
 	}
 
