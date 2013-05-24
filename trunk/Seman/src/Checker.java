@@ -27,7 +27,12 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(Feature f, Object table) {
-		// TODO Auto-generated method stub
+		SymbolTable scope=(SymbolTable) table;
+		
+		if(f instanceof attr)
+			visit((attr)f,scope);
+		else if(f instanceof method)
+			visit((method)f,scope);
 		return null;
 	}
 
@@ -119,6 +124,9 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(dispatch d, Object table) {
+		/*
+		 * effettuare controllo con la firma 
+		 */
 		// TODO Auto-generated method stub
 		return null;
 	}
