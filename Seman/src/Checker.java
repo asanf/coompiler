@@ -180,8 +180,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(block b, Object table) {
-		SymbolTable scope = (SymbolTable)table;
-		visit(b.body, scope);
+		visit(b.body, table);
 		return null;
 	}
 
