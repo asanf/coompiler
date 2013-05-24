@@ -12,12 +12,16 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Classes class_list, Object table) {
 		// TODO Auto-generated method stub
+	
+		
 		return null;
 	}
 
 	@Override
 	public Object visit(Class_ cl, Object table) {
 		// TODO Auto-generated method stub
+		
+		
 		return null;
 	}
 
@@ -141,6 +145,10 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(loop l, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(l.pred,scope);
+		visit(l.body,scope);
+		
 		return null;
 	}
 
@@ -176,30 +184,44 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(plus e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(sub e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(mul e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(divide e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(neg e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
 		return null;
 	}
 
@@ -212,18 +234,25 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(eq e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(leq e, Object table) {
 		// TODO Auto-generated method stub
+		SymbolTable scope = (SymbolTable) table;
+		visit(e.e1,scope);
+		visit(e.e2,scope);
 		return null;
 	}
 
 	@Override
 	public Object visit(comp e, Object table) {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
