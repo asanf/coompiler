@@ -344,6 +344,26 @@ class class_c extends Class_ {
         }
         out.println(Utilities.pad(n + 2) + ")");
     }
+    
+    public void buildSymbolTable(){
+    	Features fl=this.getFeatures();
+    	Enumeration features=fl.getElements();
+    	attr a;
+    	method m;
+    	
+    	while(features.hasMoreElements()){
+    		Feature f=(Feature)features.nextElement();
+    		if(f instanceof attr){
+    			a=(attr)f;
+    			simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
+    		}
+    		else if(f instanceof method){
+    			m=(method)f;
+    			simboli.addId(m.name, SymbolTable.Kind.METHOD, m.return_type);
+    		}
+    	}
+    }
+    
     public AbstractSymbol getName()     { return name; }
     public AbstractSymbol getParent()   { return parent; }
     public AbstractSymbol getFilename() { return filename; }
