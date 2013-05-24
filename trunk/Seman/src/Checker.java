@@ -139,7 +139,7 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(assign a, Object table) {
 		// TODO Auto-generated method stub
-		
+		visit(a.expr,table);
 		return null;
 	}
 
@@ -176,6 +176,7 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(typcase tc, Object table) {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
@@ -244,6 +245,8 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(lt e, Object table) {
 		// TODO Auto-generated method stub
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
