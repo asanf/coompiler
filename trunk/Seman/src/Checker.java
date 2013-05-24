@@ -84,6 +84,10 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Cases case_list, Object table) {
 		// TODO Auto-generated method stub
+		Enumeration cases = case_list.getElements();
+		while(cases.hasMoreElements()){
+			visit((typcase)cases.nextElement(),table);
+		}
 		return null;
 	}
 
@@ -154,9 +158,8 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(loop l, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(l.pred,scope);
-		visit(l.body,scope);
+		visit(l.pred,table);
+		visit(l.body,table);
 		
 		return null;
 	}
@@ -193,44 +196,39 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(plus e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(sub e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(mul e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(divide e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(neg e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
+		visit(e.e1,table);
 		return null;
 	}
 
@@ -243,18 +241,16 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(eq e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(leq e, Object table) {
 		// TODO Auto-generated method stub
-		SymbolTable scope = (SymbolTable) table;
-		visit(e.e1,scope);
-		visit(e.e2,scope);
+		visit(e.e1,table);
+		visit(e.e2,table);
 		return null;
 	}
 
