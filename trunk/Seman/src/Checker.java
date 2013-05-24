@@ -41,24 +41,11 @@ public class Checker implements Visitor {
 	public Object visit(Features feature_list, Object table) {
 		SymbolTable scope = (SymbolTable) table;
 		Enumeration features = feature_list.getElements();
-		attr a;
-		method m;
-		
+				
 		while(features.hasMoreElements()){
 			Feature f = (Feature)features.nextElement();
-			if(f instanceof attr){
-				a = (attr)f;
-				scope.addId(a.name,	SymbolTable.Kind.OBJECT, a.type_decl);
-				visit(a, scope);
-			}
-			else if(f instanceof method){
-				m = (method)f;
-				scope.addId(m.name, SymbolTable.Kind.METHOD, m.return_type);
-				visit(m, scope);
-			}
-			
-		}
-		
+			visit(f,scope);			
+		}		
 		//TODO valori restituiti da visit
 		return null;
 	}
