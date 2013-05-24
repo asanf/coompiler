@@ -78,6 +78,10 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Expressions expr_list, Object table) {
 		// TODO Auto-generated method stub
+		Enumeration exprs = expr_list.getElements();
+		while(exprs.hasMoreElements()){
+			visit((Expression)exprs.nextElement(),table);
+		}
 		return null;
 	}
 
@@ -131,6 +135,7 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(assign a, Object table) {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
