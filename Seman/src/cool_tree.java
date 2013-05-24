@@ -359,7 +359,7 @@ class class_c extends Class_ {
     		}
     		else if(f instanceof method){
     			m=(method)f;
-    			simboli.addId(m.name, SymbolTable.Kind.METHOD, m.return_type);
+    			simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
     		}
     	}
     }
