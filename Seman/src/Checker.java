@@ -2,24 +2,36 @@ import java.util.Enumeration;
 
 
 public class Checker implements Visitor {
+	
+	public Checker(ClassTable class_table)
+	{
+		this.cTable = class_table;
+	}
 
 	@Override
 	public Object visit(programc program, Object table) {
+		Enumeration classes = program.classes.getElements();
 		
+		while(classes.hasMoreElements()){
+			class_c c = (class_c)classes.nextElement();
+			c.buildSymbolTable();
+		}
+		visit(program.classes, null);
 		return null;
 	}
 
 	@Override
 	public Object visit(Classes class_list, Object table) {
-		// TODO Auto-generated method stub
-	
+		Enumeration classes = class_list.getElements();
+		while(classes.hasMoreElements())
+			visit((class_c)classes.nextElement(), null);
 		
 		return null;
 	}
 
 	@Override
 	public Object visit(Class_ cl, Object table) {
-		// TODO Auto-generated method stub
+		
 		
 		
 		return null;
@@ -38,7 +50,9 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(class_c c, Object table) {
-		// TODO Auto-generated method stub
+		
+		visit(c.features, c.simboli);
+		
 		return null;
 	}
 
@@ -293,4 +307,5 @@ public class Checker implements Visitor {
 		return null;
 	}
 
+	private ClassTable cTable;
 }
