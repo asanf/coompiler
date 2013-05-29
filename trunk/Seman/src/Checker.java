@@ -40,23 +40,10 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(Class_ cl, Object table) {
-		
+		//TODO Inutile per ora
 		return null;
 	}
-
-	@Override
-	public Object visit(Feature f, Object table) {
-		SymbolTable scope=(SymbolTable) table;
-		
-		if(f instanceof attr)
-			visit((attr)f,scope);
-		else if(f instanceof method){
-			visit((method)f,scope);
-		}
-		
-		return null;
-	}
-
+	
 	@Override
 	public Object visit(class_c c, Object table) {
 		
@@ -77,37 +64,18 @@ public class Checker implements Visitor {
 		//TODO valori restituiti da visit
 		return null;
 	}
-
+	
 	@Override
-	public Object visit(Formals formal_list, Object table) {
-		Enumeration formals=formal_list.getElements();
-		while(formals.hasMoreElements()){
-			formalc f=(formalc)formals.nextElement();
-			visit(f,table);
-		}
+	public Object visit(Feature f, Object table) {
+		SymbolTable scope=(SymbolTable) table;
+		
+		if(f instanceof attr)
+			visit((attr)f,scope);
+		else if(f instanceof method)
+			visit((method)f,scope);
 		return null;
 	}
-
-	@Override
-	public Object visit(Expressions expr_list, Object table) {
-		// TODO Auto-generated method stub
-		Enumeration exprs = expr_list.getElements();
-		while(exprs.hasMoreElements()){
-			visit((Expression)exprs.nextElement(),table);
-		}
-		return null;
-	}
-
-	@Override
-	public Object visit(Cases case_list, Object table) {
-		// TODO Auto-generated method stub
-		Enumeration cases = case_list.getElements();
-		while(cases.hasMoreElements()){
-			visit((branch)cases.nextElement(),table);
-		}
-		return null;
-	}
-
+	
 	@Override
 	public Object visit(method m, Object table) {
 		SymbolTable scope = (SymbolTable)table;
@@ -117,13 +85,44 @@ public class Checker implements Visitor {
 		while(parametri.hasMoreElements()){
 			formalc f = (formalc)parametri.nextElement();
 			scope.addId(f.name, SymbolTable.Kind.OBJECT, f.type_decl);
+			visit(f, table);
 		}
 		visit(m.expr, scope);
 		scope.exitScope();
 		return null;
 	}
+	
+	@Override
+	public Object visit(attr a, Object table) {
+		visit(a.init,table);
+		return null;
+	}
 
+	@Override
+	public Object visit(Formals formal_list, Object table) {
+		//TODO inutile
+		return null;
+	}
+	
+	@Override
+	public Object visit(formalc formal, Object table) {
+		//TODO inutile 
+		return null;
+	}
+
+
+	@Override
+	public Object visit(Expressions expr_list, Object table) {
+		Enumeration exprs = expr_list.getElements();
+		while(exprs.hasMoreElements()){
+			visit((Expression)exprs.nextElement(),table);
+		}
+		return null;
+	}
+
+	@Override
 	public Object visit(Expression e, Object table){
+		//TODO etichetta tipo
 		if(e instanceof assign)
 			visit((assign)e,table);
 		else if(e instanceof static_dispatch)
@@ -144,6 +143,8 @@ public class Checker implements Visitor {
 			visit((plus)e,table);
 		else if(e instanceof sub)
 			visit((sub)e,table);
+		else if(e instanceof mul)
+			visit((mul)e, table);
 		else if(e instanceof divide)
 			visit((divide)e,table);
 		else if(e instanceof neg)
@@ -154,6 +155,8 @@ public class Checker implements Visitor {
 			visit((eq)e,table);
 		else if(e instanceof leq)
 			visit((leq)e,table);
+		else if(e instanceof comp)
+			visit((comp)e, table);
 		else if(e instanceof int_const)
 			visit((int_const)e,table);
 		else if(e instanceof bool_const)
@@ -171,16 +174,22 @@ public class Checker implements Visitor {
 		
 		return null;
 	}
+
 	
 	@Override
-	public Object visit(attr a, Object table) {
-		visit(a.init,table);
+	public Object visit(typcase tc, Object table) {
+		visit(tc.expr, table);
+		visit(tc.cases, table);
+		
 		return null;
 	}
-
+	
 	@Override
-	public Object visit(formalc formal, Object table) {
-		//qui la visita deve occuparsi solo di aggiungere il type 
+	public Object visit(Cases case_list, Object table) {
+		Enumeration cases = case_list.getElements();
+		while(cases.hasMoreElements()){
+			visit((branch)cases.nextElement(),table);
+		}
 		return null;
 	}
 
@@ -199,30 +208,25 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(assign a, Object table) {
-		// TODO Auto-generated method stub
+		// TODO check tipo
 		visit(a.expr,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(static_dispatch sd, Object table) {
-		
+		//TODO visita
 		return null;
 	}
 
 	@Override
 	public Object visit(dispatch d, Object table) {
-		/*
-		 * effettuare controllo con la firma 
-		 */
-		
-		// TODO Auto-generated method stub
+		// TODO visita + controllo firma 
 		return null;
 	}
 
 	@Override
 	public Object visit(cond c, Object table) {
-		// TODO Auto-generated method stub
 		visit(c.pred,table);
 		visit(c.then_exp,table);
 		visit(c.else_exp,table);
@@ -231,29 +235,25 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(loop l, Object table) {
-		// TODO Auto-generated method stub
+		
 		visit(l.pred,table);
 		visit(l.body,table);
 		
 		return null;
 	}
 
-	@Override
-	public Object visit(typcase tc, Object table) {
-		visit(tc.expr, table);
-		visit(tc.cases, table);
-		
-		return null;
-	}
+
 
 	@Override
 	public Object visit(block b, Object table) {
+		// TODO Tipo
 		visit(b.body, table);
 		return null;
 	}
 
 	@Override
 	public Object visit(let l, Object table) {
+		//TODO Tipo
 		SymbolTable scope = (SymbolTable) table;
 		/*
 		 * La visita di init va fatta prima di enterscope/addId
@@ -271,7 +271,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(plus e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		visit(e.e2,table);
 		return null;
@@ -279,7 +279,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(sub e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		visit(e.e2,table);
 		return null;
@@ -287,7 +287,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(mul e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		visit(e.e2,table);
 		return null;
@@ -295,7 +295,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(divide e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		visit(e.e2,table);
 		return null;
@@ -303,13 +303,14 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(neg e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		return null;
 	}
 
 	@Override
 	public Object visit(lt e, Object table) {
+		//TODO tipo
 		visit(e.e1, table);
 		visit(e.e2, table);
 		return null;
@@ -317,7 +318,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(eq e, Object table) {
-		// TODO Auto-generated method stub
+		//TODO tipo
 		visit(e.e1,table);
 		visit(e.e2,table);
 		AbstractSymbol t1 = e.e1.get_type();
@@ -337,20 +338,20 @@ public class Checker implements Visitor {
 		if(!(cTable.isAncestor(t1, t2) || cTable.isAncestor(t2, t1))){
 			//TODO controllare se è vero
 			//TODO errore se sono diversi
-			cTable.semantError().append("");
+			cTable.semantError().append("Linea " + e.lineNumber + " gli oggetti " + t1 + " e " + t2 + " non sono confrontabili");
+			return e.set_type(TreeConstants.No_type);
 		}
-		return null;
+		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
-	public Object visit(leq e, Object table) {
-		
+	public Object visit(leq e, Object table) {		
 		visit(e.e1,table);
 		visit(e.e2,table);
 		
 		if(!e.e1.get_type().equals(TreeConstants.Int) ||
 			!e.e2.get_type().equals(TreeConstants.Int)){
-			cTable.semantError().append("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
+			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
 			return e.set_type(TreeConstants.No_type);
 		}
 		
@@ -359,27 +360,25 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(comp e, Object table) {
-		Object result = visit(e.e1, table);
-		e.set_type(e.e1.get_type());
-		return result;
+		visit(e.e1, table);
+		return e.set_type(e.e1.get_type());
 	}
 
 	@Override
 	public Object visit(int_const i, Object table) {
-		i.set_type(TreeConstants.Int);
-		return cTable.lookup(TreeConstants.Int);
+		
+		return i.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(bool_const b, Object table) {
-		b.set_type(TreeConstants.Bool);
-		return cTable.lookup(TreeConstants.Bool);
+		return b.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(string_const s, Object table) {
-		s.set_type(TreeConstants.Str);
-		return cTable.lookup(TreeConstants.Str);
+		
+		return s.set_type(TreeConstants.Str);
 	}
 
 	@Override
@@ -389,6 +388,7 @@ public class Checker implements Visitor {
 		 * in caso positivo la restituisco al genitore 
 		 * per controllare se il tipo è compatibile
 		 */
+		//TODO controllare se questa cosa di self type è corretta
 		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
 			n.set_type(TreeConstants.SELF_TYPE);
 			return TreeConstants.SELF_TYPE;
@@ -397,24 +397,21 @@ public class Checker implements Visitor {
 		Object result = cTable.lookup(n.type_name);
 		
 		if(result == null){
-			cTable.semantError().append("Line " + n.lineNumber + ": Il tipo " + n.type_name + " non esiste.");
+			cTable.semantError().println("Line " + n.lineNumber + ": Il tipo " + n.type_name + " non esiste.");
 			return n.set_type(TreeConstants.No_type);
 		}
-		
-		n.set_type(((class_c)result).name);
-		return result;
+		return n.set_type(((class_c)result).name);
 	}
 
 	@Override
 	public Object visit(isvoid iv, Object table) {
 		visit(iv.e1, table);
-		iv.set_type(TreeConstants.Bool);
-		return cTable.lookup(TreeConstants.Bool);
+		return iv.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(no_expr ne, Object table) {
-		return TreeConstants.No_type;
+		return ne.set_type(TreeConstants.No_type);
 	}
 
 	@Override
@@ -423,12 +420,10 @@ public class Checker implements Visitor {
 		SymbolTable scope = (SymbolTable) table;
 		class_c result = (class_c)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
 		if(result == null){
-			cTable.semantError().append(o.name + " non è stato dichiarato.");
+			cTable.semantError().println(o.name + " non è stato dichiarato.");
 			return o.set_type(TreeConstants.No_type);
-		} else {
-			o.set_type(result.name);
 		}
-		return result;
+		return o.set_type(result.name);
 	}
 
 	private ClassTable cTable;
