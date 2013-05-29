@@ -10,11 +10,20 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(programc program, Object table) {
+		SymbolTable scope=(SymbolTable)table;
 		Enumeration classes = program.classes.getElements();
 		
 		while(classes.hasMoreElements()){
 			class_c c = (class_c)classes.nextElement();
 			c.buildSymbolTable();
+			
+			//controllo se esiste il metodo main in class Main
+			if(c.name.str.equals("Main")){
+				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
+				if(f==null)
+					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main");
+			}
+			
 		}
 		visit(program.classes, null);
 		return null;
@@ -41,8 +50,10 @@ public class Checker implements Visitor {
 		
 		if(f instanceof attr)
 			visit((attr)f,scope);
-		else if(f instanceof method)
+		else if(f instanceof method){
 			visit((method)f,scope);
+		}
+		
 		return null;
 	}
 
