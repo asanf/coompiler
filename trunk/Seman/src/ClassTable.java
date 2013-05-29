@@ -240,10 +240,10 @@ class ClassTable {
 					|| cl.name.str.equals(TreeConstants.Str.str)
 					|| cl.name.str.equals(TreeConstants.SELF_TYPE.str)
 			)
-				semantError(cl).append("Redefinition of basic class " + cl.name);
+				semantError(cl).println("Redefinition of basic class " + cl.name);
 			
 			else if(graph.findVertex(cl.name) != null)
-				semantError(cl).append("Class " + cl.name + " was previously defined.");
+				semantError(cl).println("Class " + cl.name + " was previously defined.");
 			
 			else {
 				graph.addVertex(cl);
@@ -259,9 +259,9 @@ class ClassTable {
 						|| c.parent.str.equals(TreeConstants.Str.str)
 						|| c.parent.str.equals(TreeConstants.SELF_TYPE.str)
 				)
-					semantError(c).append("Class " + c.name + " cannot inherits class " + c.parent);
+					semantError(c).println("Class " + c.name + " cannot inherits class " + c.parent);
 				else if((p = graph.findVertex(c.parent)) == null)
-					semantError(c).append("Class " + c.name + " inherits from undefined class " + c.parent);
+					semantError(c).println("Class " + c.name + " inherits from undefined class " + c.parent);
 				else
 					graph.addEdge(c, p);
 			}
