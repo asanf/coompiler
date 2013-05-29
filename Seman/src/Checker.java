@@ -1,5 +1,5 @@
 import java.util.Enumeration;
-
+//TODO anche in caso di errore bisogna restituire il tipo corretto
 
 public class Checker implements Visitor {
 	
@@ -114,10 +114,11 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Expressions expr_list, Object table) {
 		Enumeration exprs = expr_list.getElements();
+		AbstractSymbol t = TreeConstants.No_type;
 		while(exprs.hasMoreElements()){
-			visit((Expression)exprs.nextElement(),table);
+			t = (AbstractSymbol) visit((Expression)exprs.nextElement(),table);
 		}
-		return null;
+		return t;
 	}
 
 	@Override
@@ -246,9 +247,8 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(block b, Object table) {
-		// TODO Tipo
-		visit(b.body, table);
-		return null;
+		AbstractSymbol t = (AbstractSymbol) visit(b.body, table);
+		return b.set_type(t);
 	}
 
 	@Override
@@ -271,58 +271,70 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(plus e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		visit(e.e2,table);
-		return null;
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "+" + t2);
+		}
+		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(sub e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		visit(e.e2,table);
-		return null;
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "-" + t2);
+		}
+		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(mul e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		visit(e.e2,table);
-		return null;
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "*" + t2);
+		}
+		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(divide e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		visit(e.e2,table);
-		return null;
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "/" + t2);
+		}
+		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(neg e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		return null;
+		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
+		if(!t.equals(TreeConstants.Int)){
+			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
+			return e.set_type(TreeConstants.No_type);
+		}
+		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(lt e, Object table) {
-		//TODO tipo
-		visit(e.e1, table);
-		visit(e.e2, table);
-		return null;
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1, table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2, table);
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+			cTable.semantError().println(e.lineNumber + ": uno dei due operandi non è di tipo int");
+			return e.set_type(TreeConstants.No_type);
+		}
+		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(eq e, Object table) {
-		//TODO tipo
-		visit(e.e1,table);
-		visit(e.e2,table);
-		AbstractSymbol t1 = e.e1.get_type();
-		AbstractSymbol t2 = e.e2.get_type();
+		
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
 		if( t1.equals(TreeConstants.Int) || 
 			t1.equals(TreeConstants.Str) ||
 			t1.equals(TreeConstants.Bool)||
@@ -334,23 +346,15 @@ public class Checker implements Visitor {
 				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
 				return e.set_type(TreeConstants.No_type);
 			}
-			
-		if(!(cTable.isAncestor(t1, t2) || cTable.isAncestor(t2, t1))){
-			//TODO controllare se è vero
-			//TODO errore se sono diversi
-			cTable.semantError().append("Linea " + e.lineNumber + " gli oggetti " + t1 + " e " + t2 + " non sono confrontabili");
-			return e.set_type(TreeConstants.No_type);
-		}
 		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(leq e, Object table) {		
-		visit(e.e1,table);
-		visit(e.e2,table);
+		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
+		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
 		
-		if(!e.e1.get_type().equals(TreeConstants.Int) ||
-			!e.e2.get_type().equals(TreeConstants.Int)){
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
 			return e.set_type(TreeConstants.No_type);
 		}
@@ -360,8 +364,12 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(comp e, Object table) {
-		visit(e.e1, table);
-		return e.set_type(e.e1.get_type());
+		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
+		if(!t.equals(TreeConstants.Bool)){
+			cTable.semantError().println(e.lineNumber + ": " + t + " non è Bool");
+			return e.set_type(TreeConstants.No_type);
+		}
+		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
@@ -383,6 +391,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(new_ n, Object table) {
+		SymbolTable scope = (SymbolTable) table;
 		/*
 		 * Controllo che la classe esista, 
 		 * in caso positivo la restituisco al genitore 
@@ -390,8 +399,8 @@ public class Checker implements Visitor {
 		 */
 		//TODO controllare se questa cosa di self type è corretta
 		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
-			n.set_type(TreeConstants.SELF_TYPE);
-			return TreeConstants.SELF_TYPE;
+			AbstractSymbol self_name = (AbstractSymbol)scope.lookup(TreeConstants.self, SymbolTable.Kind.OBJECT);
+			return n.set_type(self_name);
 		}
 		
 		Object result = cTable.lookup(n.type_name);
