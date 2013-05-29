@@ -223,6 +223,7 @@ class ClassTable {
     public ClassTable(Classes cls) {
 	semantErrors = 0;
 	errorStream = System.err;
+	Boolean main_flag = false;
 	
 	/* fill this in */
 	graph = new InheritanceGraph();
@@ -246,10 +247,13 @@ class ClassTable {
 				semantError(cl).println("Class " + cl.name + " was previously defined.");
 			
 			else {
+				if(cl.name.str.equals("Main"))	//controllo se esiste una classe Main
+					main_flag=true;
 				graph.addVertex(cl);
 			}
 		}
-	
+		
+		
 		Set<class_c> vertices = graph.vertexSet();
 		class_c p;
 		for (class_c c : vertices) {
