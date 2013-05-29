@@ -253,17 +253,21 @@ class ClassTable {
 		Set<class_c> vertices = graph.vertexSet();
 		class_c p;
 		for (class_c c : vertices) {
-			if(c.parent.str.equals(TreeConstants.Int.str)
-					|| c.parent.str.equals(TreeConstants.Bool.str)
-					|| c.parent.str.equals(TreeConstants.Str.str)
-					|| c.parent.str.equals(TreeConstants.SELF_TYPE.str)
-			)
-				semantError(c).append("Class " + c.name + " cannot inherits class " + c.parent);
-			else if((p = graph.findVertex(c.parent)) == null)
-				semantError(c).append("Class " + c.name + " inherits from undefined class " + c.parent);
-			else
-				graph.addEdge(c, p);
+			if(!c.name.equals(TreeConstants.Object_)){
+				if(c.parent.str.equals(TreeConstants.Int.str)
+						|| c.parent.str.equals(TreeConstants.Bool.str)
+						|| c.parent.str.equals(TreeConstants.Str.str)
+						|| c.parent.str.equals(TreeConstants.SELF_TYPE.str)
+				)
+					semantError(c).append("Class " + c.name + " cannot inherits class " + c.parent);
+				else if((p = graph.findVertex(c.parent)) == null)
+					semantError(c).append("Class " + c.name + " inherits from undefined class " + c.parent);
+				else
+					graph.addEdge(c, p);
+			}
 		}
+		
+		checkCycles();
     }
     
     
@@ -275,7 +279,7 @@ class ClassTable {
     	if(bad_nodes.isEmpty())
     		return false;
     	for (class_c cl : bad_nodes) {
-			semantError().append("Class " + cl + ", or an ancestor of " + cl + ", is involved in an inheritance cycle.");
+			semantError().println("Class " + cl.name + ", or an ancestor of " + cl.name + ", is involved in an inheritance cycle.");
 		}
     	return true;
     }
