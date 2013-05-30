@@ -345,7 +345,7 @@ class class_c extends Class_ {
         out.println(Utilities.pad(n + 2) + ")");
     }
     
-    public void buildSymbolTable(){
+    public void buildSymbolTable(ClassTable ctlb){
     	Features fl=this.getFeatures();
     	Enumeration features=fl.getElements();
     	attr a;
@@ -358,7 +358,12 @@ class class_c extends Class_ {
     		Feature f=(Feature)features.nextElement();
     		if(f instanceof attr){
     			a=(attr)f;
-    			simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
+    			Object s=simboli.probe(((attr) f).name, SymbolTable.Kind.OBJECT);
+    			if(s!=null)
+    				simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
+    			else
+    				//messaggio di errore da sistemare
+    				ctlb.semantError(this).println(this.lineNumber + "attributo "+a.name+" is defined.");
     		}
     		else if(f instanceof method){
     			m=(method)f;
