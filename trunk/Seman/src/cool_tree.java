@@ -362,12 +362,40 @@ class class_c extends Class_ {
     			if(s!=null)
     				simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
     			else
-    				//messaggio di errore da sistemare
-    				ctlb.semantError(this).println(this.lineNumber + "attributo "+a.name+" is defined.");
+    				ctlb.semantError(this).println(this.lineNumber + "attribute "+a.name+" is an attribute of an inherited class.");
     		}
     		else if(f instanceof method){
     			m=(method)f;
-    			simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
+    			method s=(method)simboli.lookup(m.name, SymbolTable.Kind.METHOD);
+    			
+    			if(s!=null){
+    				if(!(s.return_type.str.equals(m.return_type.str))){
+    					ctlb.semantError(this).println(this.lineNumber + ": in redefined method "+m.name+", return type "+m.return_type+ "is different from original return type "+s.return_type);
+    					break;
+    				}
+    				Formals mf=m.formals;
+    				Formals sf=s.formals;
+    				Enumeration m_formals=mf.getElements();
+    				Enumeration s_formals=sf.getElements();
+    				
+    				while(s_formals.hasMoreElements() && m_formals.hasMoreElements()){
+    					/*
+    					 * lascio il codice così, ma è da completare
+    					 * PROBLEMA: secondo me non va bene gestire questi controlli qui
+    					 * e non va bene neanche aggiungere qui il metodo alla tabella dei simboli
+    					 * MOTIVO: 
+    					 * 1. se facciamo qui i controlli anticipiamo il typeChecking e successivamente,
+    					 * 	  quando andremo ad effettuare le visit troveremo metodi, non presenti nella table, e 
+    					 * 	  lanceremo un errore diverso da quello previsto.
+    					 * 2. se non facciamo i controlli, andiamo ad aggiungere alla tabella un metodo
+    					 * 	  che non dovrebbe essere aggiunto perchè errato
+    					 * 
+    					 * SOLUZIONE PROPOSTA: sposto l'add dei metodi nella table nella visit
+    					 */
+    				}
+    			}
+    			else
+    				simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
     		}
     	}
     }
