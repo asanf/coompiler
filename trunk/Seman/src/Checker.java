@@ -94,7 +94,9 @@ public class Checker implements Visitor {
 	
 	@Override
 	public Object visit(attr a, Object table) {
-		visit(a.init,table);
+		AbstractSymbol t = (AbstractSymbol) visit(a.init,table);
+		if(!cTable.isAncestor(a.type_decl, t))
+			cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
 		return null;
 	}
 
@@ -209,9 +211,14 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(assign a, Object table) {
-		// TODO check tipo
-		visit(a.expr,table);
-		return null;
+		SymbolTable scope = (SymbolTable) table;
+		AbstractSymbol var_type = (AbstractSymbol)scope.lookup(a.name, SymbolTable.Kind.OBJECT);
+		if(var_type == null)
+			cTable.semantError().println(a.lineNumber + ": la variabile " + a.name + " non è presente nello scope corrente");
+		AbstractSymbol expr_type = (AbstractSymbol) visit(a.expr,table);
+		if(!cTable.isAncestor(var_type, expr_type))
+			cTable.semantError().println(a.lineNumber + ": type mismatch : " + var_type + " <= " + expr_type); 
+		return a.set_type(expr_type);
 	}
 
 	@Override
@@ -228,19 +235,30 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(cond c, Object table) {
-		visit(c.pred,table);
-		visit(c.then_exp,table);
-		visit(c.else_exp,table);
-		return null;
+		
+		AbstractSymbol pred_type = (AbstractSymbol) visit(c.pred,table);
+		AbstractSymbol then_type = (AbstractSymbol) visit(c.then_exp,table);
+		AbstractSymbol else_type = (AbstractSymbol) visit(c.else_exp,table);
+		
+		if(!pred_type.equals(TreeConstants.Bool))
+			cTable.semantError().println(c.lineNumber + ": Condizione if : " + pred_type + " invece di Bool");
+		
+		AbstractSymbol if_type = cTable.nearestCommonAncestor(then_type, else_type);
+		
+		return c.set_type(if_type);
 	}
 
 	@Override
 	public Object visit(loop l, Object table) {
 		
-		visit(l.pred,table);
+		AbstractSymbol t = (AbstractSymbol) visit(l.pred,table);
+		
+		if(!t.equals(TreeConstants.Bool))
+			cTable.semantError().println(l.lineNumber + ": La condizione del while deve restituire un bool, restituisce invece un " + t);
+		
 		visit(l.body,table);
 		
-		return null;
+		return l.set_type(TreeConstants.Object_);
 	}
 
 
@@ -314,7 +332,6 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		if(!t.equals(TreeConstants.Int)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
-			return e.set_type(TreeConstants.No_type);
 		}
 		return e.set_type(TreeConstants.Int);
 	}
@@ -344,7 +361,6 @@ public class Checker implements Visitor {
 			
 			if(!t1.equals(t2)){
 				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
-				return e.set_type(TreeConstants.No_type);
 			}
 		return e.set_type(TreeConstants.Bool);
 	}
@@ -356,7 +372,6 @@ public class Checker implements Visitor {
 		
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
-			return e.set_type(TreeConstants.No_type);
 		}
 		
 		return e.set_type(TreeConstants.Bool);
@@ -367,7 +382,6 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		if(!t.equals(TreeConstants.Bool)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Bool");
-			return e.set_type(TreeConstants.No_type);
 		}
 		return e.set_type(TreeConstants.Bool);
 	}
