@@ -300,20 +300,27 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(let l, Object table) {
-		//TODO Tipo
+		//let id:type <- init in body
 		SymbolTable scope = (SymbolTable) table;
-		/*
-		 * La visita di init va fatta prima di enterscope/addId
-		 * perché se id esiste, init deve fare riferimento a quella 
-		 * dello scope precedente
-		 */
-		visit(l.init, scope);
+		//recupero il tipo dell'espressione init
+		AbstractSymbol init_type = (AbstractSymbol)	visit(l.init, scope);
+		//TODO controllare se è corretto preoccuparsi di no_type: init_type = no_type => non c'è espressione di inizializzazione?
+		//TODO compatibilità con self type vuol dire?
+		
+		if(!(l.type_decl.equals(TreeConstants.SELF_TYPE) ||
+				(cTable.lookup(l.type_decl) == null))){
+			cTable.semantError().println(l.lineNumber + ": il tipo " + l.type_decl + " non è stato dichiarato");
+		}
+		if(!(init_type.equals(TreeConstants.No_type) || cTable.isAncestor(l.type_decl, init_type)))
+			cTable.semantError().println(l.lineNumber + ": Type mismatch: " + l.type_decl + " <- " + init_type);
+		
+		
 		scope.enterScope();
 		scope.addId(l.identifier, SymbolTable.Kind.OBJECT, l.type_decl);
 		
-		visit(l.body, scope);
+		AbstractSymbol let_type = (AbstractSymbol) visit(l.body, scope);
 		scope.exitScope();
-		return null;
+		return l.set_type(let_type);
 	}
 
 	@Override
@@ -460,13 +467,10 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(new_ n, Object table) {
 		// new TYPE_ID
-		
-		SymbolTable scope = (SymbolTable) table;
-		
-		//TODO da controllare, forse bisogna semplicemente restituire SELF_TYPE
+
+		// se il tipo è SELF_TYPE lo restituisco direttamente
 		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
-			AbstractSymbol self_name = (AbstractSymbol)scope.lookup(TreeConstants.self, SymbolTable.Kind.OBJECT);
-			return n.set_type(self_name);
+			return n.set_type(TreeConstants.SELF_TYPE);
 		}
 		
 		// cerco la classe di nome type_name nella class table
