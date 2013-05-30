@@ -232,8 +232,10 @@ public class Checker implements Visitor {
 		
 		// se non esiste stampo l'errore
 		if(var_type == null)
-			cTable.semantError().println(a.lineNumber + ": la variabile " + a.name + " non è presente nello scope corrente");
-		
+			cTable.semantError().println(a.lineNumber + ": assignment to undeclared variable " + a.name);
+		// errore se sto assegnando a self
+		else if(var_type.str.equals(TreeConstants.self))
+			cTable.semantError().println(a.lineNumber + ": cannot assign to \'self\'");
 		// valuto l'espressione e recupero il suo tipo
 		AbstractSymbol expr_type = (AbstractSymbol) visit(a.expr,table);
 		
