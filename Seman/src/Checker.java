@@ -221,13 +221,24 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(assign a, Object table) {
+		// object_id <- expr
 		SymbolTable scope = (SymbolTable) table;
+		
+		// cerco l'id nella symbol table 
 		AbstractSymbol var_type = (AbstractSymbol)scope.lookup(a.name, SymbolTable.Kind.OBJECT);
+		
+		// se non esiste stampo l'errore
 		if(var_type == null)
 			cTable.semantError().println(a.lineNumber + ": la variabile " + a.name + " non è presente nello scope corrente");
+		
+		// valuto l'espressione e recupero il suo tipo
 		AbstractSymbol expr_type = (AbstractSymbol) visit(a.expr,table);
+		
+		
+		// perché l'assegnamento sia corretto, expr_type deve essere compatibile con var_type
 		if(!cTable.isAncestor(var_type, expr_type))
 			cTable.semantError().println(a.lineNumber + ": type mismatch : " + var_type + " <= " + expr_type); 
+		
 		return a.set_type(expr_type);
 	}
 
@@ -245,14 +256,17 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(cond c, Object table) {
-		
+		//if pred then then_expr else else_expr fi
+		// recupero i tipi delle singole espressioni
 		AbstractSymbol pred_type = (AbstractSymbol) visit(c.pred,table);
 		AbstractSymbol then_type = (AbstractSymbol) visit(c.then_exp,table);
 		AbstractSymbol else_type = (AbstractSymbol) visit(c.else_exp,table);
 		
+		// il tipo di pred deve essere un boolean
 		if(!pred_type.equals(TreeConstants.Bool))
 			cTable.semantError().println(c.lineNumber + ": Condizione if : " + pred_type + " invece di Bool");
 		
+		// il tipo dell'if è il primo antenato comune
 		AbstractSymbol if_type = cTable.nearestCommonAncestor(then_type, else_type);
 		
 		return c.set_type(if_type);
@@ -260,14 +274,19 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(loop l, Object table) {
+		// while pred loop body pool
 		
+		// visito il predicato e ne recupero il tipo
 		AbstractSymbol t = (AbstractSymbol) visit(l.pred,table);
 		
+		// il tipo del predicato deve essere un bool
 		if(!t.equals(TreeConstants.Bool))
 			cTable.semantError().println(l.lineNumber + ": La condizione del while deve restituire un bool, restituisce invece un " + t);
 		
+		// visito il corpo del while
 		visit(l.body,table);
 		
+		// il tipo di un while è sempre object
 		return l.set_type(TreeConstants.Object_);
 	}
 
@@ -339,29 +358,44 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(neg e, Object table) {
+		// ~ e1, negazione aritmetica
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
+		
+		// questa operazione può essere fatta solo su un intero
 		if(!t.equals(TreeConstants.Int)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
 		}
+		
+		// il tipo di ritorno è un intero
 		return e.set_type(TreeConstants.Int);
 	}
 
 	@Override
 	public Object visit(lt e, Object table) {
+		// e1 < e2
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1, table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2, table);
+		
+		// solo due interi possono essere confrontati con <
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": uno dei due operandi non è di tipo int");
-			return e.set_type(TreeConstants.No_type);
 		}
 		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(eq e, Object table) {
+		// e1 = e2
 		
+		// recupero i tipi delle due espressioni
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
+		
+		
+		/*
+		 * Se uno dei due è Int, Str, Bool allora le due espressioni
+		 * devono avere lo stesso tipo per essere confrontabili
+		 */
 		if( t1.equals(TreeConstants.Int) || 
 			t1.equals(TreeConstants.Str) ||
 			t1.equals(TreeConstants.Bool)||
@@ -372,27 +406,37 @@ public class Checker implements Visitor {
 			if(!t1.equals(t2)){
 				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
 			}
+		
+		// il risultato è sempre un bool
 		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
-	public Object visit(leq e, Object table) {		
+	public Object visit(leq e, Object table) {
+		// e1 <= e2
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
 		
+		// solo due interi possono essere confrontati
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
 		}
 		
+		// il tipo di un confronto è sempre un bool
 		return e.set_type(TreeConstants.Bool);
 	}
 
 	@Override
 	public Object visit(comp e, Object table) {
+		// not e1 , not booleano
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
+		
+		// e1 deve essere un'espressione booleana
 		if(!t.equals(TreeConstants.Bool)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Bool");
 		}
+		
+		// il tipo restituito è sempre bool
 		return e.set_type(TreeConstants.Bool);
 	}
 
@@ -415,25 +459,26 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(new_ n, Object table) {
+		// new TYPE_ID
+		
 		SymbolTable scope = (SymbolTable) table;
-		/*
-		 * Controllo che la classe esista, 
-		 * in caso positivo la restituisco al genitore 
-		 * per controllare se il tipo è compatibile
-		 */
-		//TODO controllare se questa cosa di self type è corretta
+		
+		//TODO da controllare, forse bisogna semplicemente restituire SELF_TYPE
 		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
 			AbstractSymbol self_name = (AbstractSymbol)scope.lookup(TreeConstants.self, SymbolTable.Kind.OBJECT);
 			return n.set_type(self_name);
 		}
 		
+		// cerco la classe di nome type_name nella class table
 		Object result = cTable.lookup(n.type_name);
 		
+		// se non esiste stampo l'errore e restituisco no_type
 		if(result == null){
 			cTable.semantError().println("Line " + n.lineNumber + ": Il tipo " + n.type_name + " non esiste.");
 			return n.set_type(TreeConstants.No_type);
 		}
-		return n.set_type(((class_c)result).name);
+		// in caso contrario il tipo è valido e posso restituirlo
+		return n.set_type(n.type_name);
 	}
 
 	@Override
@@ -449,7 +494,11 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(object o, Object table) {
-		
+		/*
+		 * In questo nodo devo semplicemente controllare la presenza
+		 * dell'id nello scope corrente: se l'id esiste restituisco il suo tipo,
+		 * altrimenti no_type
+		 */
 		SymbolTable scope = (SymbolTable) table;
 		class_c result = (class_c)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
 		if(result == null){
