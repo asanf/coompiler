@@ -15,7 +15,7 @@ public class Checker implements Visitor {
 		
 		while(classes.hasMoreElements()){
 			class_c c = (class_c)classes.nextElement();
-			c.buildSymbolTable();
+			c.buildSymbolTable(cTable);
 			
 			//controllo se esiste il metodo main in class Main
 			if(c.name.str.equals("Main")){
@@ -69,10 +69,13 @@ public class Checker implements Visitor {
 	public Object visit(Feature f, Object table) {
 		SymbolTable scope=(SymbolTable) table;
 		
-		if(f instanceof attr)
+		if(f instanceof attr){
+			
 			visit((attr)f,scope);
-		else if(f instanceof method)
+		}
+		else if(f instanceof method){
 			visit((method)f,scope);
+		}
 		return null;
 	}
 	
