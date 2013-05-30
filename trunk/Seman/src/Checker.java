@@ -84,6 +84,15 @@ public class Checker implements Visitor {
 		
 		while(parametri.hasMoreElements()){
 			formalc f = (formalc)parametri.nextElement();
+			
+			//alcuni controlli su formal
+			if(f.type_decl.str.equals(TreeConstants.SELF_TYPE))
+				cTable.semantError().println(f.lineNumber + ": Formal parameter "+ f.name + "cannot have type SELF_TYPE");
+			if(f.name.str.equals(TreeConstants.self))
+				cTable.semantError().println(f.lineNumber + ": self cannot be the name of a formal parameter");
+			else if(scope.probe(f.name, SymbolTable.Kind.OBJECT)==null)
+				cTable.semantError().println(f.lineNumber+": formal parameter "+f.name+" is multiply defined.");
+
 			scope.addId(f.name, SymbolTable.Kind.OBJECT, f.type_decl);
 			visit(f, table);
 		}
