@@ -92,9 +92,10 @@ public class Checker implements Visitor {
 				cTable.semantError().println(f.lineNumber + ": self cannot be the name of a formal parameter");
 			else if(scope.probe(f.name, SymbolTable.Kind.OBJECT)==null)
 				cTable.semantError().println(f.lineNumber+": formal parameter "+f.name+" is multiply defined.");
-
-			scope.addId(f.name, SymbolTable.Kind.OBJECT, f.type_decl);
-			visit(f, table);
+			else{
+				scope.addId(f.name, SymbolTable.Kind.OBJECT, f.type_decl);
+				visit(f, table);
+			}
 		}
 		visit(m.expr, scope);
 		scope.exitScope();
