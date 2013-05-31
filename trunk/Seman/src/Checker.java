@@ -274,7 +274,57 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(static_dispatch sd, Object table) {
 		//TODO visita
-		return null;
+		SymbolTable scope = (SymbolTable) table;
+		AbstractSymbol t0 = (AbstractSymbol) visit(sd.expr, table);
+		AbstractSymbol returnType = null;
+		Enumeration<formalc> formali = null;
+		boolean confrontabili = true;
+		method m;
+		
+		if(t0.equals(TreeConstants.self))
+			t0 = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
+		
+		if(!cTable.isAncestor(sd.type_name, t0)){
+			cTable.semantError().println(sd.lineNumber + ": Tipo del Static Dispatch:"+sd.name +" non corrisponde con quello dichiarato");
+
+		}
+		class_c dispatch_class = cTable.lookup(sd.type_name);
+				
+		m = (method)dispatch_class.simboli.lookup(sd.name, SymbolTable.Kind.METHOD);
+		
+		if( m == null) m = (method) cTable.isInherited(t0, sd.name, SymbolTable.Kind.METHOD);
+		if( m == null)
+			cTable.semantError().println(sd.lineNumber + ": dispatch to undefined method " + sd.name);
+		else {
+			formali = (Enumeration<formalc>) m.formals.getElements();
+			if(!(sd.actual.getLength() == m.formals.getLength())){
+				cTable.semantError().println(sd.lineNumber + ": il metodo " + sd.name + " è invocato con un errato numero di parametri");
+				confrontabili = false;
+			}
+		}
+		
+		Enumeration attuali = sd.actual.getElements();
+		AbstractSymbol actual_type, formal_type;
+		//TODO ma actual type esiste?
+		while(attuali.hasMoreElements()){
+			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
+			
+			if(confrontabili){
+				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
+				if(!cTable.isAncestor(formal_type, actual_type))
+					cTable.semantError().println(sd.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
+			}
+			
+		}
+		
+		if(m != null){
+			if(m.return_type.equals(TreeConstants.SELF_TYPE))
+				return sd.set_type(t0);
+			else 
+				return sd.set_type(m.return_type);
+		}
+		return sd.set_type(TreeConstants.Object_);
+		
 	}
 
 	@Override
