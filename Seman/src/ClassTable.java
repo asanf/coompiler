@@ -251,10 +251,9 @@ class ClassTable {
 					main_flag=true;
 				graph.addVertex(cl);
 			}
-			
-			if(!main_flag){
-				semantError().println("Class Main is not defined.");
-			}
+		}
+		if(!main_flag){
+			semantError().println("Class Main is not defined.");
 		}
 		
 		
