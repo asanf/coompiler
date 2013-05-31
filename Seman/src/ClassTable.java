@@ -330,6 +330,23 @@ class ClassTable {
     	return f.name;
     }
     
+    
+    public Feature isInherited(AbstractSymbol class_name, AbstractSymbol formal_name, SymbolTable.Kind kind){
+    	
+    	Feature toReturn = null;
+    	
+    	if(class_name.equals(TreeConstants.Object_))
+    		return toReturn;
+    	
+    	class_c curr = this.lookup(class_name);
+    	
+    	while(!(curr = lookup(curr.parent)).equals(TreeConstants.Object_)){
+    		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
+    	}
+    	return toReturn;
+    	
+    }
+    
 
     /** Prints line number and file name of the given class.
      *
