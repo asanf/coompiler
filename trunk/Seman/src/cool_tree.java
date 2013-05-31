@@ -360,14 +360,16 @@ class class_c extends Class_ {
     			a=(attr)f;
     			Object s=simboli.lookup(a.name, SymbolTable.Kind.OBJECT);
     			if(s!=null){
-    				//attributo già dichiarato
-    				ctlb.semantError().println(a.lineNumber + "attribute " + a.name + "is multiply defined.");
+    				if(a.name.str.equals(TreeConstants.self))
+    					ctlb.semantError().println(a.lineNumber + ": /'self'/ cannot be the name of attribute.");
+    				else //attributo già dichiarato
+    					ctlb.semantError().println(a.lineNumber + "attribute " + a.name + "is multiply defined.");
     			}
     			else{
     				attr in_a=(attr)ctlb.isInherited(this.name, a.name, SymbolTable.Kind.OBJECT);
     				if(in_a!=null){
     					//attributo ereditato, quindi non ridefinibile
-    					ctlb.semantError().println(a.lineNumber + ": Attribute " + a.name + "is an ttribute of an inherited class.");
+    					ctlb.semantError().println(a.lineNumber + ": Attribute " + a.name + "is an attribute of an inherited class.");
     				}
     				else //aggiungo l'attributo alla tabella dei simobli della classe
     					simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
