@@ -113,7 +113,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(a.init,table);
 		if(!cTable.isAncestor(a.type_decl, t))
 			cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
-		return null;
+		return a.type_decl;
 	}
 
 	@Override
