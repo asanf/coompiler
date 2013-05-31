@@ -18,7 +18,7 @@ public class Checker implements Visitor {
 			c.buildSymbolTable(cTable);
 			
 			//controllo se esiste il metodo main in class Main
-			if(c.name.str.equals("Main")){
+			if(c.name.str.equals(TreeConstants.Main)){
 				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
 				if(f==null)
 					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main");
