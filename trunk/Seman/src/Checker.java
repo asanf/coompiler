@@ -21,7 +21,8 @@ public class Checker implements Visitor {
 			if(c.name.str.equals(TreeConstants.Main)){
 				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
 				if(f==null)
-					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main");
+					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main" + c.simboli);
+					
 			}
 			
 		}
@@ -103,7 +104,7 @@ public class Checker implements Visitor {
 		scope.exitScope();
 		
 		if(!inferred_type.equals(m.return_type)){
-			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + "of method " + m.name + "does not conform to declared return type " + m.return_type);
+			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + " of method " + m.name + " does not conform to declared return type " + m.return_type);
 		}
 		return m.return_type;
 	}
@@ -111,7 +112,7 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(attr a, Object table) {
 		AbstractSymbol t = (AbstractSymbol) visit(a.init,table);
-		if(t != TreeConstants.No_type)
+		if(t.str.equals(TreeConstants.No_type))
 			if(!cTable.isAncestor(a.type_decl, t))
 				cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
 		return a.type_decl;
@@ -192,7 +193,7 @@ public class Checker implements Visitor {
 		else if(e instanceof object)
 			expr_type = (AbstractSymbol)visit((object)e,table);
 		
-		return e.set_type(expr_type);
+		return expr_type;
 	}
 
 	
@@ -273,7 +274,8 @@ public class Checker implements Visitor {
 		if(!cTable.isAncestor(var_type, expr_type))
 			cTable.semantError().println(a.lineNumber + ": type mismatch : " + var_type + " <= " + expr_type); 
 		
-		return a.set_type(expr_type);
+		a.set_type(expr_type);
+		return expr_type;
 	}
 
 	@Override
@@ -314,7 +316,7 @@ public class Checker implements Visitor {
 		while(attuali.hasMoreElements()){
 			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
 			
-			if(confrontabili){
+			if(confrontabili && (formali != null)){
 				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
 				if(!cTable.isAncestor(formal_type, actual_type))
 					cTable.semantError().println(sd.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
@@ -323,12 +325,18 @@ public class Checker implements Visitor {
 		}
 		
 		if(m != null){
-			if(m.return_type.equals(TreeConstants.SELF_TYPE))
-				return sd.set_type(t0);
-			else 
-				return sd.set_type(m.return_type);
+			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
+				sd.set_type(t0);
+				return t0;
+			}
+				
+			else {
+				sd.set_type(m.return_type);
+				return m.return_type;
+			}
 		}
-		return sd.set_type(TreeConstants.Object_);
+		sd.set_type(TreeConstants.Object_);
+		return TreeConstants.Object_;
 		
 	}
 
@@ -374,12 +382,16 @@ public class Checker implements Visitor {
 		}
 		
 		if(m != null){
-			if(m.return_type.equals(TreeConstants.SELF_TYPE))
-				return d.set_type(t0);
-			else 
-				return d.set_type(m.return_type);
+			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
+				d.set_type(t0);
+				return t0;
+			}else{ 
+				d.set_type(m.return_type);
+				return m.return_type;
+			}
 		}
-		return d.set_type(t0);
+		d.set_type(t0);
+		return t0;
 	}
 
 	@Override
@@ -397,7 +409,8 @@ public class Checker implements Visitor {
 		// il tipo dell'if è il primo antenato comune
 		AbstractSymbol if_type = cTable.nearestCommonAncestor(then_type, else_type);
 		
-		return c.set_type(if_type);
+		c.set_type(if_type);
+		return if_type;
 	}
 
 	@Override
@@ -415,7 +428,8 @@ public class Checker implements Visitor {
 		visit(l.body,table);
 		
 		// il tipo di un while è sempre object
-		return l.set_type(TreeConstants.Object_);
+		l.set_type(TreeConstants.Object_);
+		return TreeConstants.Object_;
 	}
 
 
@@ -423,7 +437,8 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(block b, Object table) {
 		AbstractSymbol t = (AbstractSymbol) visit(b.body, table);
-		return b.set_type(t);
+		b.set_type(t);
+		return t;
 	}
 
 	@Override
@@ -448,7 +463,8 @@ public class Checker implements Visitor {
 		
 		AbstractSymbol let_type = (AbstractSymbol) visit(l.body, scope);
 		scope.exitScope();
-		return l.set_type(let_type);
+		l.set_type(let_type);
+		return let_type;
 	}
 
 	@Override
@@ -458,7 +474,8 @@ public class Checker implements Visitor {
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "+" + t2);
 		}
-		return e.set_type(TreeConstants.Int);
+		e.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
@@ -468,7 +485,8 @@ public class Checker implements Visitor {
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "-" + t2);
 		}
-		return e.set_type(TreeConstants.Int);
+		e.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
@@ -478,7 +496,8 @@ public class Checker implements Visitor {
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "*" + t2);
 		}
-		return e.set_type(TreeConstants.Int);
+		e.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
@@ -488,7 +507,8 @@ public class Checker implements Visitor {
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "/" + t2);
 		}
-		return e.set_type(TreeConstants.Int);
+		e.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
@@ -501,8 +521,9 @@ public class Checker implements Visitor {
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
 		}
 		
+		e.set_type(TreeConstants.Int);
 		// il tipo di ritorno è un intero
-		return e.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
@@ -515,7 +536,8 @@ public class Checker implements Visitor {
 		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": uno dei due operandi non è di tipo int");
 		}
-		return e.set_type(TreeConstants.Bool);
+		e.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
@@ -543,7 +565,8 @@ public class Checker implements Visitor {
 			}
 		
 		// il risultato è sempre un bool
-		return e.set_type(TreeConstants.Bool);
+		e.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
@@ -558,7 +581,8 @@ public class Checker implements Visitor {
 		}
 		
 		// il tipo di un confronto è sempre un bool
-		return e.set_type(TreeConstants.Bool);
+		e.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
@@ -572,24 +596,27 @@ public class Checker implements Visitor {
 		}
 		
 		// il tipo restituito è sempre bool
-		return e.set_type(TreeConstants.Bool);
+		e.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
 	public Object visit(int_const i, Object table) {
 		
-		return i.set_type(TreeConstants.Int);
+		i.set_type(TreeConstants.Int);
+		return TreeConstants.Int;
 	}
 
 	@Override
 	public Object visit(bool_const b, Object table) {
-		return b.set_type(TreeConstants.Bool);
+		b.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
 	public Object visit(string_const s, Object table) {
-		
-		return s.set_type(TreeConstants.Str);
+		s.set_type(TreeConstants.Str);
+		return TreeConstants.Str;
 	}
 
 	@Override
@@ -607,21 +634,25 @@ public class Checker implements Visitor {
 		// se non esiste stampo l'errore e restituisco no_type
 		if(result == null){
 			cTable.semantError().println("Line " + n.lineNumber + ": Il tipo " + n.type_name + " non esiste.");
-			return n.set_type(TreeConstants.No_type);
+			n.set_type(TreeConstants.No_type);
+			return TreeConstants.No_type;
 		}
 		// in caso contrario il tipo è valido e posso restituirlo
-		return n.set_type(n.type_name);
+		n.set_type(n.type_name);
+		return n.type_name;
 	}
 
 	@Override
 	public Object visit(isvoid iv, Object table) {
 		visit(iv.e1, table);
-		return iv.set_type(TreeConstants.Bool);
+		iv.set_type(TreeConstants.Bool);
+		return TreeConstants.Bool;
 	}
 
 	@Override
 	public Object visit(no_expr ne, Object table) {
-		return ne.set_type(TreeConstants.No_type);
+		ne.set_type(TreeConstants.No_type);
+		return TreeConstants.No_type;
 	}
 
 	@Override
@@ -632,12 +663,14 @@ public class Checker implements Visitor {
 		 * altrimenti no_type
 		 */
 		SymbolTable scope = (SymbolTable) table;
-		class_c result = (class_c)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
+		AbstractSymbol result = (AbstractSymbol)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
 		if(result == null){
-			cTable.semantError().println(o.name + " non è stato dichiarato.");
-			return o.set_type(TreeConstants.No_type);
+			cTable.semantError().println(o.lineNumber + ": " + o.name + " non è stato dichiarato.");
+			o.set_type(TreeConstants.No_type);
+			return TreeConstants.No_type;
 		}
-		return o.set_type(result.name);
+		o.set_type(result);
+		return result;
 	}
 
 	private ClassTable cTable;

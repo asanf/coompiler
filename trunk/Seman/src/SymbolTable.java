@@ -19,6 +19,7 @@ ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
 PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+import java.util.Enumeration;
 import java.util.Stack;
 import java.util.Hashtable;
 
@@ -141,6 +142,10 @@ class SymbolTable {
     			return false;
     		return true;
     	}
+    	
+    	public String toString(){
+    		return ""+name;
+    	}
 
     	private Kind kind; 
     	private AbstractSymbol name; 
@@ -200,11 +205,15 @@ class SymbolTable {
      * @return the string rep
      * */
     public String toString() {
-	String res = "";
+	String res = "\n";
 	// I break the abstraction here a bit by knowing that stack is 
 	// really a vector...
 	for (int i = tbl.size() - 1, j = 0; i >= 0; i--, j++) {
-	    res += "Scope " + j + ": " + tbl.elementAt(i) + "\n";
+		Hashtable tmp = (Hashtable)tbl.elementAt(i);
+		res += "Scope " + j + ": ";
+		Enumeration it = tmp.keys();
+		while(it.hasMoreElements())
+			 res += (it.nextElement() + "\n");
 	}
 	return res;
     }
