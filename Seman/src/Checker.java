@@ -111,8 +111,9 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(attr a, Object table) {
 		AbstractSymbol t = (AbstractSymbol) visit(a.init,table);
-		if(!cTable.isAncestor(a.type_decl, t))
-			cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
+		if(t != TreeConstants.No_type)
+			if(!cTable.isAncestor(a.type_decl, t))
+				cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
 		return a.type_decl;
 	}
 
@@ -141,57 +142,57 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(Expression e, Object table){
-		//TODO etichetta tipo
+		AbstractSymbol expr_type = TreeConstants.No_type;
 		if(e instanceof assign)
-			visit((assign)e,table);
+			expr_type = (AbstractSymbol)visit((assign)e,table);
 		else if(e instanceof static_dispatch)
-			visit((static_dispatch)e,table);
+			expr_type = (AbstractSymbol)visit((static_dispatch)e,table);
 		else if(e instanceof dispatch)
-			visit((dispatch)e,table);
+			expr_type = (AbstractSymbol)visit((dispatch)e,table);
 		else if(e instanceof cond)
-			visit((cond)e,table);
+			expr_type = (AbstractSymbol)visit((cond)e,table);
 		else if(e instanceof loop)
-			visit((loop)e,table);
+			expr_type = (AbstractSymbol)visit((loop)e,table);
 		else if(e instanceof typcase)
-			visit((typcase)e,table);
+			expr_type = (AbstractSymbol)visit((typcase)e,table);
 		else if(e instanceof block)
-			visit((block)e,table);
+			expr_type = (AbstractSymbol)visit((block)e,table);
 		else if(e instanceof let)
-			visit((let)e,table);
+			expr_type = (AbstractSymbol)visit((let)e,table);
 		else if(e instanceof plus)
-			visit((plus)e,table);
+			expr_type = (AbstractSymbol)visit((plus)e,table);
 		else if(e instanceof sub)
-			visit((sub)e,table);
+			expr_type = (AbstractSymbol)visit((sub)e,table);
 		else if(e instanceof mul)
-			visit((mul)e, table);
+			expr_type = (AbstractSymbol)visit((mul)e, table);
 		else if(e instanceof divide)
-			visit((divide)e,table);
+			expr_type = (AbstractSymbol)visit((divide)e,table);
 		else if(e instanceof neg)
-			visit((neg)e,table);
+			expr_type = (AbstractSymbol)visit((neg)e,table);
 		else if(e instanceof lt)
-			visit((lt)e,table);
+			expr_type = (AbstractSymbol)visit((lt)e,table);
 		else if(e instanceof eq)
-			visit((eq)e,table);
+			expr_type = (AbstractSymbol)visit((eq)e,table);
 		else if(e instanceof leq)
-			visit((leq)e,table);
+			expr_type = (AbstractSymbol)visit((leq)e,table);
 		else if(e instanceof comp)
-			visit((comp)e, table);
+			expr_type = (AbstractSymbol)visit((comp)e, table);
 		else if(e instanceof int_const)
-			visit((int_const)e,table);
+			expr_type = (AbstractSymbol)visit((int_const)e,table);
 		else if(e instanceof bool_const)
-			visit((bool_const)e,table);
+			expr_type = (AbstractSymbol)visit((bool_const)e,table);
 		else if(e instanceof string_const)
-			visit((string_const)e,table);
+			expr_type = (AbstractSymbol)visit((string_const)e,table);
 		else if(e instanceof new_)
-			visit((new_)e,table);
+			expr_type = (AbstractSymbol)visit((new_)e,table);
 		else if(e instanceof isvoid)
-			visit((isvoid)e,table);
+			expr_type = (AbstractSymbol)visit((isvoid)e,table);
 		else if(e instanceof no_expr)
-			visit((no_expr)e,table);
+			expr_type = (AbstractSymbol)visit((no_expr)e,table);
 		else if(e instanceof object)
-			visit((object)e,table);
+			expr_type = (AbstractSymbol)visit((object)e,table);
 		
-		return null;
+		return e.set_type(expr_type);
 	}
 
 	
