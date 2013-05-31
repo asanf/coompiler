@@ -103,7 +103,7 @@ public class Checker implements Visitor {
 		AbstractSymbol inferred_type = (AbstractSymbol)visit(m.expr, scope);
 		scope.exitScope();
 		
-		if(!inferred_type.equals(m.return_type)){
+		if(!inferred_type.str.equals(m.return_type)){
 			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + " of method " + m.name + " does not conform to declared return type " + m.return_type);
 		}
 		return m.return_type;
@@ -325,7 +325,7 @@ public class Checker implements Visitor {
 		}
 		
 		if(m != null){
-			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
+			if(m.return_type.str.equals(TreeConstants.SELF_TYPE)){
 				sd.set_type(t0);
 				return t0;
 			}
@@ -349,7 +349,7 @@ public class Checker implements Visitor {
 		boolean confrontabili = true;
 		method m;
 		
-		if(t0.equals(TreeConstants.self))
+		if(t0.str.equals(TreeConstants.self))
 			t0 = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
 		
 		class_c dispatch_class = cTable.lookup(t0);
@@ -382,7 +382,7 @@ public class Checker implements Visitor {
 		}
 		
 		if(m != null){
-			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
+			if(m.return_type.str.equals(TreeConstants.SELF_TYPE)){
 				d.set_type(t0);
 				return t0;
 			}else{ 
@@ -403,7 +403,7 @@ public class Checker implements Visitor {
 		AbstractSymbol else_type = (AbstractSymbol) visit(c.else_exp,table);
 		
 		// il tipo di pred deve essere un boolean
-		if(!pred_type.equals(TreeConstants.Bool))
+		if(!pred_type.str.equals(TreeConstants.Bool))
 			cTable.semantError().println(c.lineNumber + ": Condizione if : " + pred_type + " invece di Bool");
 		
 		// il tipo dell'if è il primo antenato comune
@@ -421,7 +421,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(l.pred,table);
 		
 		// il tipo del predicato deve essere un bool
-		if(!t.equals(TreeConstants.Bool))
+		if(!t.str.equals(TreeConstants.Bool))
 			cTable.semantError().println(l.lineNumber + ": La condizione del while deve restituire un bool, restituisce invece un " + t);
 		
 		// visito il corpo del while
@@ -450,11 +450,11 @@ public class Checker implements Visitor {
 		//TODO controllare se è corretto preoccuparsi di no_type: init_type = no_type => non c'è espressione di inizializzazione?
 		//TODO compatibilità con self type vuol dire?
 		
-		if(!(l.type_decl.equals(TreeConstants.SELF_TYPE) ||
+		if(!(l.type_decl.str.equals(TreeConstants.SELF_TYPE) ||
 				(cTable.lookup(l.type_decl) == null))){
 			cTable.semantError().println(l.lineNumber + ": il tipo " + l.type_decl + " non è stato dichiarato");
 		}
-		if(!(init_type.equals(TreeConstants.No_type) || cTable.isAncestor(l.type_decl, init_type)))
+		if(!(init_type.str.equals(TreeConstants.No_type) || cTable.isAncestor(l.type_decl, init_type)))
 			cTable.semantError().println(l.lineNumber + ": Type mismatch: " + l.type_decl + " <- " + init_type);
 		
 		
@@ -493,7 +493,7 @@ public class Checker implements Visitor {
 	public Object visit(mul e, Object table) {
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
-		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "*" + t2);
 		}
 		e.set_type(TreeConstants.Int);
@@ -504,7 +504,7 @@ public class Checker implements Visitor {
 	public Object visit(divide e, Object table) {
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
-		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "/" + t2);
 		}
 		e.set_type(TreeConstants.Int);
@@ -517,7 +517,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		
 		// questa operazione può essere fatta solo su un intero
-		if(!t.equals(TreeConstants.Int)){
+		if(!t.str.equals(TreeConstants.Int)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
 		}
 		
@@ -553,14 +553,14 @@ public class Checker implements Visitor {
 		 * Se uno dei due è Int, Str, Bool allora le due espressioni
 		 * devono avere lo stesso tipo per essere confrontabili
 		 */
-		if( t1.equals(TreeConstants.Int) || 
-			t1.equals(TreeConstants.Str) ||
-			t1.equals(TreeConstants.Bool)||
-			t2.equals(TreeConstants.Int) ||
-			t2.equals(TreeConstants.Str) ||
-			t2.equals(TreeConstants.Bool))
+		if( t1.str.equals(TreeConstants.Int) || 
+			t1.str.equals(TreeConstants.Str) ||
+			t1.str.equals(TreeConstants.Bool)||
+			t2.str.equals(TreeConstants.Int) ||
+			t2.str.equals(TreeConstants.Str) ||
+			t2.str.equals(TreeConstants.Bool))
 			
-			if(!t1.equals(t2)){
+			if(!t1.str.equals(t2.str)){
 				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
 			}
 		
@@ -576,7 +576,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
 		
 		// solo due interi possono essere confrontati
-		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
+		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
 			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
 		}
 		
@@ -591,7 +591,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		
 		// e1 deve essere un'espressione booleana
-		if(!t.equals(TreeConstants.Bool)){
+		if(!t.str.equals(TreeConstants.Bool)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Bool");
 		}
 		
@@ -624,7 +624,7 @@ public class Checker implements Visitor {
 		// new TYPE_ID
 
 		// se il tipo è SELF_TYPE lo restituisco direttamente
-		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
+		if(n.type_name.str.equals(TreeConstants.SELF_TYPE)){
 			return n.set_type(TreeConstants.SELF_TYPE);
 		}
 		
