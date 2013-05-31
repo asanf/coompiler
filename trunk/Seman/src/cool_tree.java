@@ -276,6 +276,10 @@ class programc extends Program {
 	ClassTable classTable = new ClassTable(classes);
 	
 	/* some semantic analysis code may go here */
+	
+	Checker check = new Checker(classTable);
+	check.visit(this, null);
+	
 
 	if (classTable.errors()) {
 	    System.err.println("Compilation halted due to static semantic errors.");
@@ -318,6 +322,8 @@ class class_c extends Class_ {
         parent = a2;
         features = a3;
         filename = a4;
+        simboli = new SymbolTable();
+        simboli.enterScope();
     }
     public TreeNode copy() {
         return new class_c(lineNumber, copy_AbstractSymbol(name), copy_AbstractSymbol(parent), (Features)features.copy(), copy_AbstractSymbol(filename));
@@ -350,7 +356,6 @@ class class_c extends Class_ {
     	Enumeration features=fl.getElements();
     	attr a;
     	method m;
-    	
     	//aggiungo self alla classe corrente
     	simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, this.name);
     	
