@@ -99,9 +99,13 @@ public class Checker implements Visitor {
 				visit(f, table);
 			}
 		}
-		visit(m.expr, scope);
+		AbstractSymbol inferred_type = (AbstractSymbol)visit(m.expr, scope);
 		scope.exitScope();
-		return null;
+		
+		if(!inferred_type.equals(m.return_type)){
+			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + "of method " + m.name + "does not conform to declared return type " + m.return_type);
+		}
+		return m.return_type;
 	}
 	
 	@Override
