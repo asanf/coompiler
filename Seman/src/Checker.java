@@ -255,8 +255,52 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(dispatch d, Object table) {
-		// TODO visita + controllo firma 
-		return null;
+		SymbolTable scope = (SymbolTable) table;
+		AbstractSymbol t0 = (AbstractSymbol) visit(d.expr, table);
+		AbstractSymbol returnType = null;
+		Enumeration<formalc> formali = null;
+		boolean confrontabili = true;
+		method m;
+		
+		if(t0.equals(TreeConstants.self))
+			t0 = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
+		
+		class_c dispatch_class = cTable.lookup(t0);
+		
+		m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
+		
+		if( m == null) m = (method) cTable.isInherited(t0, d.name, SymbolTable.Kind.METHOD);
+		if( m == null)
+			cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);
+		else {
+			formali = (Enumeration<formalc>) m.formals.getElements();
+			if(!(d.actual.getLength() == m.formals.getLength())){
+				cTable.semantError().println(d.lineNumber + ": il metodo " + d.name + " è invocato con un errato numero di parametri");
+				confrontabili = false;
+			}
+		}
+		
+		Enumeration attuali = d.actual.getElements();
+		AbstractSymbol actual_type, formal_type;
+		//TODO ma actual type esiste?
+		while(attuali.hasMoreElements()){
+			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
+			
+			if(confrontabili){
+				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
+				if(!cTable.isAncestor(formal_type, actual_type))
+					cTable.semantError().println(d.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
+			}
+			
+		}
+		
+		if(m != null){
+			if(m.return_type.equals(TreeConstants.SELF_TYPE))
+				return d.set_type(t0);
+			else 
+				return d.set_type(m.return_type);
+		}
+		return d.set_type(t0);
 	}
 
 	@Override
