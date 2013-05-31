@@ -69,8 +69,7 @@ public class Checker implements Visitor {
 	public Object visit(Feature f, Object table) {
 		SymbolTable scope=(SymbolTable) table;
 		
-		if(f instanceof attr){
-			
+		if(f instanceof attr){			
 			visit((attr)f,scope);
 		}
 		else if(f instanceof method){
