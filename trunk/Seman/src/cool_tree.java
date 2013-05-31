@@ -358,44 +358,74 @@ class class_c extends Class_ {
     		Feature f=(Feature)features.nextElement();
     		if(f instanceof attr){
     			a=(attr)f;
-    			Object s=simboli.probe(((attr) f).name, SymbolTable.Kind.OBJECT);
-    			if(s!=null)
-    				simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
-    			else
-    				ctlb.semantError(this).println(this.lineNumber + "attribute "+a.name+" is an attribute of an inherited class.");
+    			Object s=simboli.lookup(a.name, SymbolTable.Kind.OBJECT);
+    			if(s!=null){
+    				//attributo già dichiarato
+    				ctlb.semantError().println(a.lineNumber + "attribute " + a.name + "is multiply defined.");
+    			}
+    			else{
+    				attr in_a=(attr)ctlb.isInherited(this.name, a.name, SymbolTable.Kind.OBJECT);
+    				if(in_a!=null){
+    					//attributo ereditato, quindi non ridefinibile
+    					ctlb.semantError().println(a.lineNumber + ": Attribute " + a.name + "is an ttribute of an inherited class.");
+    				}
+    				else //aggiungo l'attributo alla tabella dei simobli della classe
+    					simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
+    			}
     		}
     		else if(f instanceof method){
     			m=(method)f;
     			method s=(method)simboli.lookup(m.name, SymbolTable.Kind.METHOD);
     			
     			if(s!=null){
-    				if(!(s.return_type.str.equals(m.return_type.str))){
-    					ctlb.semantError(this).println(this.lineNumber + ": in redefined method "+m.name+", return type "+m.return_type+ "is different from original return type "+s.return_type);
-    					break;
-    				}
-    				Formals mf=m.formals;
-    				Formals sf=s.formals;
-    				Enumeration m_formals=mf.getElements();
-    				Enumeration s_formals=sf.getElements();
-    				
-    				while(s_formals.hasMoreElements() && m_formals.hasMoreElements()){
-    					/*
-    					 * lascio il codice così, ma è da completare
-    					 * PROBLEMA: secondo me non va bene gestire questi controlli qui
-    					 * e non va bene neanche aggiungere qui il metodo alla tabella dei simboli
-    					 * MOTIVO: 
-    					 * 1. se facciamo qui i controlli anticipiamo il typeChecking e successivamente,
-    					 * 	  quando andremo ad effettuare le visit troveremo metodi, non presenti nella table, e 
-    					 * 	  lanceremo un errore diverso da quello previsto.
-    					 * 2. se non facciamo i controlli, andiamo ad aggiungere alla tabella un metodo
-    					 * 	  che non dovrebbe essere aggiunto perchè errato
-    					 * 
-    					 * SOLUZIONE PROPOSTA: sposto l'add dei metodi nella table nella visit
-    					 */
-    				}
+    				//metodo già definito
+    				ctlb.semantError().println(m.lineNumber + ": Method " + m.name + "is multiply defined.");				
     			}
-    			else
-    				simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
+    			else{
+    				method in_m=(method)ctlb.isInherited(this.name, m.name, SymbolTable.Kind.METHOD);
+    				if(in_m!=null){
+    					//metodo ereditato, quindi posso sovrascriverlo ma non sovraccaricarlo
+    					
+    					//controllo tipo di ritorno
+    					if(!(in_m.return_type.str.equals(m.return_type.str))){
+    						ctlb.semantError().println(m.lineNumber + ": in redefinited method " + m.name + ", return type " + m.return_type + " is different from original return type " + in_m.return_type);
+    						break;
+    					}
+    					else{ //controllo il numero di formal poi il tipo
+    						Formals mf=m.formals;
+    						Formals in_mf=in_m.formals;
+    						Enumeration m_formals=mf.getElements();
+    						Enumeration in_mf_formals=mf.getElements();
+    						boolean flag_type=true;
+    						boolean flag_mf=m_formals.hasMoreElements();
+    						boolean flag_in_mf=in_mf_formals.hasMoreElements();
+    						
+    						if(flag_mf && flag_in_mf){
+    							do{
+        							formalc f1=(formalc)m_formals.nextElement();
+        							formalc f2=(formalc)in_mf_formals.nextElement();
+        							
+        							if(!(f1.type_decl.str.equals(f2.type_decl.str))){
+        								// tipo dei parametri non esatto
+        								flag_type=false;
+        							}
+        								
+        							flag_mf=m_formals.hasMoreElements();
+            						flag_in_mf=in_mf_formals.hasMoreElements();
+        						}while(flag_mf && flag_in_mf);
+    						}
+    						if(flag_mf!=flag_in_mf){//uno dei due aveva ancora parametri formali
+    							ctlb.semantError().println(m.lineNumber + ": Incompatible number of formal parameters in redefined method " + m.name + ".");
+    						}
+    						else if(!flag_type){ //incompatibilità di tipo dei parametri
+    							ctlb.semantError().println(m.lineNumber + ": In redefined method " + m.name + ", parameter type " + m.return_type + " is different from original type " + in_m.return_type + ".");
+    						}    						
+    					}    					
+    				}
+    				else //nuovo metodo da aggiungere alla tabella dei simboli
+    					simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
+    			}
+    			
     		}
     	}
     }
