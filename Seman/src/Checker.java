@@ -193,8 +193,9 @@ public class Checker implements Visitor {
 	
 	@Override
 	public Object visit(typcase tc, Object table) {
-		visit(tc.expr, table);
-		visit(tc.cases, table);
+		AbstractSymbol tc_expr_type=(AbstractSymbol)visit(tc.expr, table);
+		AbstractSymbol tc_cases_type=(AbstractSymbol)visit(tc.cases, table);
+		
 		
 		return null;
 	}
@@ -202,10 +203,34 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(Cases case_list, Object table) {
 		Enumeration cases = case_list.getElements();
-		while(cases.hasMoreElements()){
-			visit((branch)cases.nextElement(),table);
+		AbstractSymbol b_type;
+		AbstractSymbol common_type;
+		
+		branch b=(branch)cases.nextElement();
+		common_type=(AbstractSymbol)visit(b,table);
+		//controllo che le variabili dichiarate in ogni branch siano tutte distinte
+		Enumeration t_cases=case_list.getElements();
+		while(t_cases.hasMoreElements()){
+			AbstractSymbol t_case=(AbstractSymbol)t_cases.nextElement();
+			if(common_type.str.equals(t_case.str))
+				cTable.semantError().println(b.lineNumber + ": Duplicate " + common_type + " in case statement.");
 		}
-		return null;
+		while(cases.hasMoreElements()){
+			b=(branch)cases.nextElement();
+			b_type=(AbstractSymbol)visit(b,table);
+			if(!(common_type.str.equals(TreeConstants.Object_)))
+				common_type=cTable.nearestCommonAncestor(common_type, b_type);
+			//controllo che le variabili dichiarate in ogni branch siano tutte distinte
+			t_cases=case_list.getElements();
+			while(t_cases.hasMoreElements()){
+				AbstractSymbol t_case=(AbstractSymbol)t_cases.nextElement();
+				if(b_type.str.equals(t_case.str))
+					cTable.semantError().println(b.lineNumber + ": Duplicate " + b_type + " in case statement.");
+			}
+			
+		}
+		
+		return common_type;
 	}
 
 	@Override
@@ -216,9 +241,9 @@ public class Checker implements Visitor {
 		scope.enterScope();
 		
 		scope.addId(b.name, SymbolTable.Kind.OBJECT, b.type_decl);
-		visit(b.expr, scope);
-		
-		return null;
+		AbstractSymbol b_type=(AbstractSymbol)visit(b.expr, scope);
+		scope.exitScope();
+		return b_type;
 	}
 
 	@Override
