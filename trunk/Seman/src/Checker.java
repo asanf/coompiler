@@ -15,8 +15,7 @@ public class Checker implements Visitor {
 		
 		while(classes.hasMoreElements()){
 			class_c c = (class_c)classes.nextElement();
-			c.buildSymbolTable(cTable);
-			
+				
 			//controllo se esiste il metodo main in class Main
 			if(c.name.equals(TreeConstants.Main)){
 				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
@@ -290,7 +289,7 @@ public class Checker implements Visitor {
 
 	@Override
 	public Object visit(static_dispatch sd, Object table) {
-		//TODO visita
+		//TODO replicare le modifiche fatte in dispatch anche qui, oppure refactor possibilmente
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(sd.expr, table);
 		AbstractSymbol expr_class_name = t0;
@@ -358,7 +357,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t0 = (AbstractSymbol) visit(d.expr, table);
 		AbstractSymbol class_name = t0;
 		Enumeration<formalc> formali = null;
-		boolean confrontabili = true;
+		boolean confrontabili = false;
 		method m = null;
 		class_c dispatch_class;
 		if(t0.equals(TreeConstants.SELF_TYPE))
@@ -366,19 +365,27 @@ public class Checker implements Visitor {
 		
 		
 		dispatch_class = cTable.lookup(class_name);
-		
+		System.err.println("dispatch_class = " + class_name);
 		if(dispatch_class != null){
 			m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
-			if( m == null) m = (method) cTable.isInherited(class_name, d.name, SymbolTable.Kind.METHOD);
+			if( m == null) {
+				System.err.println("Il metodo è null, quindi lo cerco fra gli antenati");
+				m = (method) cTable.isInherited(class_name, d.name, SymbolTable.Kind.METHOD);
+			}
 			if( m == null){
 				System.err.println(class_name + " " + d.name + " " + m);
 				cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);
-			}else {
+			}
+			if(m!=null){
 				formali = (Enumeration<formalc>) m.formals.getElements();
 				if(!(d.actual.getLength() == m.formals.getLength())){
 					cTable.semantError().println(d.lineNumber + ": il metodo " + d.name + " è invocato con un errato numero di parametri");
 					confrontabili = false;
+				} else {
+					if(d.actual.getLength() != 0)
+						confrontabili = true;
 				}
+				
 			}
 		}else{
 			cTable.semantError(dispatch_class).println(d.lineNumber + ": il tipo " + class_name);
@@ -396,14 +403,14 @@ public class Checker implements Visitor {
 				if(!cTable.isAncestor(formal_type, actual_type))
 					cTable.semantError().println(d.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
 			}
-			
 		}
 		
-		if(m != null && !m.return_type.equals(TreeConstants.SELF_TYPE)){
+		if(m!= null && !m.return_type.equals(TreeConstants.SELF_TYPE)){
 				d.set_type(m.return_type);
 				return m.return_type;			
 		}
 		d.set_type(t0);
+		System.err.println("Sono arrivato alla fine");
 		return t0;
 	}
 
@@ -693,6 +700,6 @@ public class Checker implements Visitor {
 		o.set_type(result);
 		return result;
 	}
-
+	
 	private ClassTable cTable;
 }
