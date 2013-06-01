@@ -330,6 +330,7 @@ class ClassTable {
     	class_c f = lookup(first);
     	class_c s = lookup(second);
     	
+    	
     	while(!isAncestor(f.name, s.name)) f = lookup(f.parent);
     	
     	return f.name;
