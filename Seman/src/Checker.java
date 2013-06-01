@@ -103,7 +103,7 @@ public class Checker implements Visitor {
 		AbstractSymbol inferred_type = (AbstractSymbol)visit(m.expr, scope);
 		scope.exitScope();
 		
-		if(!inferred_type.str.equals(m.return_type)){
+		if(!inferred_type.equals(m.return_type)){
 			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + " of method " + m.name + " does not conform to declared return type " + m.return_type);
 		}
 		return m.return_type;
@@ -344,18 +344,13 @@ public class Checker implements Visitor {
 	public Object visit(dispatch d, Object table) {
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(d.expr, table);
-		AbstractSymbol returnType = null;
 		Enumeration<formalc> formali = null;
 		boolean confrontabili = true;
 		method m;
 		
-		if(t0.str.equals(TreeConstants.self))
-			t0 = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
-		
 		class_c dispatch_class = cTable.lookup(t0);
 		
 		m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
-		
 		if( m == null) m = (method) cTable.isInherited(t0, d.name, SymbolTable.Kind.METHOD);
 		if( m == null)
 			cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);

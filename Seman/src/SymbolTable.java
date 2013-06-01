@@ -124,13 +124,19 @@ class SymbolTable {
     	public AbstractSymbol getName(){ return name; }
     	public Kind getKind() { return kind; }
 
+    	
+    	@Override
+    	public int hashCode(){
+    		int nameCode = name.hashCode();
+    		int typeCode = (kind == Kind.OBJECT)? 0 : 1;
+			return nameCode + 31*typeCode;
+    	}
+    	
     	@Override
     	public boolean equals(Object obj) {
     		if (this == obj)
     			return true;
-    		if (obj == null)
-    			return false;
-    		if (getClass() != obj.getClass())
+    		if (obj == null || getClass() != obj.getClass())
     			return false;
     		SymbolTableKey other = (SymbolTableKey) obj;
     		if (kind != other.kind)
@@ -144,7 +150,12 @@ class SymbolTable {
     	}
     	
     	public String toString(){
-    		return ""+name;
+    		switch(kind){
+    		case OBJECT : return name + ": Attributo";
+    		case METHOD : return name + ": Metodo";
+    		default : return "" + name;
+    		}
+    			
     	}
 
     	private Kind kind; 
@@ -206,14 +217,19 @@ class SymbolTable {
      * */
     public String toString() {
 	String res = "\n";
+	SymbolTableKey key;
+	Object value;
 	// I break the abstraction here a bit by knowing that stack is 
 	// really a vector...
 	for (int i = tbl.size() - 1, j = 0; i >= 0; i--, j++) {
 		Hashtable tmp = (Hashtable)tbl.elementAt(i);
-		res += "Scope " + j + ": ";
+		res += "Scope " + i + ": ";
 		Enumeration it = tmp.keys();
-		while(it.hasMoreElements())
-			 res += (it.nextElement() + "\n");
+		while(it.hasMoreElements()){
+			key = (SymbolTableKey)it.nextElement();
+			value = tmp.get(key);
+			 res += (key + " " + value + "\n");
+		}
 	}
 	return res;
     }
