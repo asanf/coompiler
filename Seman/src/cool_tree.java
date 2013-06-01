@@ -357,7 +357,8 @@ class class_c extends Class_ {
     	attr a;
     	method m;
     	//aggiungo self alla classe corrente
-    	simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, this.name); 
+    	simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, TreeConstants.SELF_TYPE);
+    	simboli.addId(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT, this.name);
     	while(features.hasMoreElements()){
     		Feature f=(Feature)features.nextElement();
     		if(f instanceof attr){
@@ -376,6 +377,7 @@ class class_c extends Class_ {
     					ctlb.semantError().println(a.lineNumber + ": Attribute " + a.name + "is an attribute of an inherited class.");
     				}
     				else //aggiungo l'attributo alla tabella dei simobli della classe
+    					
     					simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
     			}
     		}

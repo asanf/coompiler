@@ -18,7 +18,7 @@ public class Checker implements Visitor {
 			c.buildSymbolTable(cTable);
 			
 			//controllo se esiste il metodo main in class Main
-			if(c.name.str.equals(TreeConstants.Main)){
+			if(c.name.equals(TreeConstants.Main)){
 				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
 				if(f==null)
 					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main" + c.simboli);
@@ -89,9 +89,9 @@ public class Checker implements Visitor {
 			formalc f = (formalc)parametri.nextElement();
 			
 			//alcuni controlli su formal
-			if(f.type_decl.str.equals(TreeConstants.SELF_TYPE))
+			if(f.type_decl.equals(TreeConstants.SELF_TYPE))
 				cTable.semantError().println(f.lineNumber + ": Formal parameter "+ f.name + "cannot have type SELF_TYPE");
-			if(f.name.str.equals(TreeConstants.self))
+			if(f.name.equals(TreeConstants.self))
 				cTable.semantError().println(f.lineNumber + ": self cannot be the name of a formal parameter");
 			else if(scope.probe(f.name, SymbolTable.Kind.OBJECT)!=null)
 				cTable.semantError().println(f.lineNumber+": formal parameter "+f.name+" is multiply defined.");
@@ -112,7 +112,7 @@ public class Checker implements Visitor {
 	@Override
 	public Object visit(attr a, Object table) {
 		AbstractSymbol t = (AbstractSymbol) visit(a.init,table);
-		if(t.str.equals(TreeConstants.No_type))
+		if(t.equals(TreeConstants.No_type))
 			if(!cTable.isAncestor(a.type_decl, t))
 				cTable.semantError().println(a.lineNumber + ": type mismatch : " + a.type_decl + " <= " + t);
 		return a.type_decl;
@@ -202,8 +202,8 @@ public class Checker implements Visitor {
 		AbstractSymbol tc_expr_type=(AbstractSymbol)visit(tc.expr, table);
 		AbstractSymbol tc_cases_type=(AbstractSymbol)visit(tc.cases, table);
 		
-		
-		return null;
+		tc.set_type(tc_cases_type);
+		return tc_cases_type;
 	}
 	
 	@Override
@@ -216,21 +216,23 @@ public class Checker implements Visitor {
 		common_type=(AbstractSymbol)visit(b,table);
 		//controllo che le variabili dichiarate in ogni branch siano tutte distinte
 		Enumeration t_cases=case_list.getElements();
+		t_cases.nextElement(); // il confronto deve partire dal branch successivo a b
 		while(t_cases.hasMoreElements()){
-			AbstractSymbol t_case=(AbstractSymbol)t_cases.nextElement();
-			if(common_type.str.equals(t_case.str))
+			AbstractSymbol t_case=((branch)t_cases.nextElement()).type_decl;
+			if(common_type.equals(t_case))
 				cTable.semantError().println(b.lineNumber + ": Duplicate " + common_type + " in case statement.");
 		}
 		while(cases.hasMoreElements()){
 			b=(branch)cases.nextElement();
 			b_type=(AbstractSymbol)visit(b,table);
-			if(!(common_type.str.equals(TreeConstants.Object_)))
+			if(!(common_type.equals(TreeConstants.Object_)))
 				common_type=cTable.nearestCommonAncestor(common_type, b_type);
 			//controllo che le variabili dichiarate in ogni branch siano tutte distinte
 			t_cases=case_list.getElements();
+			t_cases.nextElement();
 			while(t_cases.hasMoreElements()){
-				AbstractSymbol t_case=(AbstractSymbol)t_cases.nextElement();
-				if(b_type.str.equals(t_case.str))
+				AbstractSymbol t_case=((branch)t_cases.nextElement()).type_decl;
+				if(b_type.equals(t_case))
 					cTable.semantError().println(b.lineNumber + ": Duplicate " + b_type + " in case statement.");
 			}
 			
@@ -264,7 +266,7 @@ public class Checker implements Visitor {
 		if(var_type == null)
 			cTable.semantError().println(a.lineNumber + ": assignment to undeclared variable " + a.name);
 		// errore se sto assegnando a self
-		else if(var_type.str.equals(TreeConstants.self))
+		else if(var_type.equals(TreeConstants.self))
 			cTable.semantError().println(a.lineNumber + ": cannot assign to \'self\'");
 		// valuto l'espressione e recupero il suo tipo
 		AbstractSymbol expr_type = (AbstractSymbol) visit(a.expr,table);
@@ -283,15 +285,17 @@ public class Checker implements Visitor {
 		//TODO visita
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(sd.expr, table);
+		AbstractSymbol expr_class_name = t0;
 		AbstractSymbol returnType = null;
 		Enumeration<formalc> formali = null;
 		boolean confrontabili = true;
 		method m;
 		
-		if(t0.equals(TreeConstants.self))
-			t0 = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
+		if(t0.equals(TreeConstants.SELF_TYPE))
+			expr_class_name = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
 		
-		if(!cTable.isAncestor(sd.type_name, t0)){
+		
+		if(!cTable.isAncestor(sd.type_name, expr_class_name)){
 			cTable.semantError().println(sd.lineNumber + ": Tipo del Static Dispatch:"+sd.name +" non corrisponde con quello dichiarato");
 
 		}
@@ -325,7 +329,7 @@ public class Checker implements Visitor {
 		}
 		
 		if(m != null){
-			if(m.return_type.str.equals(TreeConstants.SELF_TYPE)){
+			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
 				sd.set_type(t0);
 				return t0;
 			}
@@ -344,30 +348,40 @@ public class Checker implements Visitor {
 	public Object visit(dispatch d, Object table) {
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(d.expr, table);
+		AbstractSymbol class_name = t0;
 		Enumeration<formalc> formali = null;
 		boolean confrontabili = true;
-		method m;
+		method m = null;
+		class_c dispatch_class;
+		if(t0.equals(TreeConstants.SELF_TYPE))
+			class_name = (AbstractSymbol)scope.lookup(t0, SymbolTable.Kind.OBJECT);
 		
-		class_c dispatch_class = cTable.lookup(t0);
 		
-		m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
-		if( m == null) m = (method) cTable.isInherited(t0, d.name, SymbolTable.Kind.METHOD);
-		if( m == null)
-			cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);
-		else {
-			formali = (Enumeration<formalc>) m.formals.getElements();
-			if(!(d.actual.getLength() == m.formals.getLength())){
-				cTable.semantError().println(d.lineNumber + ": il metodo " + d.name + " è invocato con un errato numero di parametri");
-				confrontabili = false;
+		dispatch_class = cTable.lookup(class_name);
+		
+		if(dispatch_class != null){
+			m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
+			if( m == null) m = (method) cTable.isInherited(class_name, d.name, SymbolTable.Kind.METHOD);
+			if( m == null)
+				cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);
+			else {
+				formali = (Enumeration<formalc>) m.formals.getElements();
+				if(!(d.actual.getLength() == m.formals.getLength())){
+					cTable.semantError().println(d.lineNumber + ": il metodo " + d.name + " è invocato con un errato numero di parametri");
+					confrontabili = false;
+				}
 			}
+		}else{
+			cTable.semantError(dispatch_class).println(d.lineNumber + ": il tipo " + class_name);
 		}
+		
+		
 		
 		Enumeration attuali = d.actual.getElements();
 		AbstractSymbol actual_type, formal_type;
 		//TODO ma actual type esiste?
 		while(attuali.hasMoreElements()){
 			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
-			
 			if(confrontabili){
 				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
 				if(!cTable.isAncestor(formal_type, actual_type))
@@ -376,14 +390,9 @@ public class Checker implements Visitor {
 			
 		}
 		
-		if(m != null){
-			if(m.return_type.str.equals(TreeConstants.SELF_TYPE)){
-				d.set_type(t0);
-				return t0;
-			}else{ 
+		if(m != null && !m.return_type.equals(TreeConstants.SELF_TYPE)){
 				d.set_type(m.return_type);
-				return m.return_type;
-			}
+				return m.return_type;			
 		}
 		d.set_type(t0);
 		return t0;
@@ -398,7 +407,7 @@ public class Checker implements Visitor {
 		AbstractSymbol else_type = (AbstractSymbol) visit(c.else_exp,table);
 		
 		// il tipo di pred deve essere un boolean
-		if(!pred_type.str.equals(TreeConstants.Bool))
+		if(!pred_type.equals(TreeConstants.Bool))
 			cTable.semantError().println(c.lineNumber + ": Condizione if : " + pred_type + " invece di Bool");
 		
 		// il tipo dell'if è il primo antenato comune
@@ -416,7 +425,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(l.pred,table);
 		
 		// il tipo del predicato deve essere un bool
-		if(!t.str.equals(TreeConstants.Bool))
+		if(!t.equals(TreeConstants.Bool))
 			cTable.semantError().println(l.lineNumber + ": La condizione del while deve restituire un bool, restituisce invece un " + t);
 		
 		// visito il corpo del while
@@ -445,11 +454,11 @@ public class Checker implements Visitor {
 		//TODO controllare se è corretto preoccuparsi di no_type: init_type = no_type => non c'è espressione di inizializzazione?
 		//TODO compatibilità con self type vuol dire?
 		
-		if(!(l.type_decl.str.equals(TreeConstants.SELF_TYPE) ||
+		if(!(l.type_decl.equals(TreeConstants.SELF_TYPE) &&
 				(cTable.lookup(l.type_decl) == null))){
 			cTable.semantError().println(l.lineNumber + ": il tipo " + l.type_decl + " non è stato dichiarato");
 		}
-		if(!(init_type.str.equals(TreeConstants.No_type) || cTable.isAncestor(l.type_decl, init_type)))
+		if(!(init_type.equals(TreeConstants.No_type) || cTable.isAncestor(l.type_decl, init_type)))
 			cTable.semantError().println(l.lineNumber + ": Type mismatch: " + l.type_decl + " <- " + init_type);
 		
 		
@@ -488,7 +497,7 @@ public class Checker implements Visitor {
 	public Object visit(mul e, Object table) {
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
-		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "*" + t2);
 		}
 		e.set_type(TreeConstants.Int);
@@ -499,7 +508,7 @@ public class Checker implements Visitor {
 	public Object visit(divide e, Object table) {
 		AbstractSymbol t1 = (AbstractSymbol) visit(e.e1,table);
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
-		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println(e.lineNumber + ": non-int arguments:" + t1 + "/" + t2);
 		}
 		e.set_type(TreeConstants.Int);
@@ -512,7 +521,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		
 		// questa operazione può essere fatta solo su un intero
-		if(!t.str.equals(TreeConstants.Int)){
+		if(!t.equals(TreeConstants.Int)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Int");
 		}
 		
@@ -548,15 +557,15 @@ public class Checker implements Visitor {
 		 * Se uno dei due è Int, Str, Bool allora le due espressioni
 		 * devono avere lo stesso tipo per essere confrontabili
 		 */
-		if( t1.str.equals(TreeConstants.Int) || 
-			t1.str.equals(TreeConstants.Str) ||
-			t1.str.equals(TreeConstants.Bool)||
-			t2.str.equals(TreeConstants.Int) ||
-			t2.str.equals(TreeConstants.Str) ||
-			t2.str.equals(TreeConstants.Bool))
+		if( t1.equals(TreeConstants.Int) || 
+			t1.equals(TreeConstants.Str) ||
+			t1.equals(TreeConstants.Bool)||
+			t2.equals(TreeConstants.Int) ||
+			t2.equals(TreeConstants.Str) ||
+			t2.equals(TreeConstants.Bool))
 			
-			if(!t1.str.equals(t2.str)){
-				cTable.semantError().append("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
+			if(!t1.equals(t2)){
+				cTable.semantError().println("Linea " + e.lineNumber + ": Non è possibile confrontare un oggetto di tipo " + t1 + " con un uno di tipo " + t2);
 			}
 		
 		// il risultato è sempre un bool
@@ -571,7 +580,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t2 = (AbstractSymbol) visit(e.e2,table);
 		
 		// solo due interi possono essere confrontati
-		if(!(t1.str.equals(TreeConstants.Int) && t2.str.equals(TreeConstants.Int))){
+		if(!(t1.equals(TreeConstants.Int) && t2.equals(TreeConstants.Int))){
 			cTable.semantError().println("line " + e.lineNumber + ": Confronto fra due oggetti non Int");
 		}
 		
@@ -586,7 +595,7 @@ public class Checker implements Visitor {
 		AbstractSymbol t = (AbstractSymbol) visit(e.e1, table);
 		
 		// e1 deve essere un'espressione booleana
-		if(!t.str.equals(TreeConstants.Bool)){
+		if(!t.equals(TreeConstants.Bool)){
 			cTable.semantError().println(e.lineNumber + ": " + t + " non è Bool");
 		}
 		
@@ -619,7 +628,7 @@ public class Checker implements Visitor {
 		// new TYPE_ID
 
 		// se il tipo è SELF_TYPE lo restituisco direttamente
-		if(n.type_name.str.equals(TreeConstants.SELF_TYPE)){
+		if(n.type_name.equals(TreeConstants.SELF_TYPE)){
 			return n.set_type(TreeConstants.SELF_TYPE);
 		}
 		
