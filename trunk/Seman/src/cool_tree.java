@@ -357,8 +357,7 @@ class class_c extends Class_ {
     	attr a;
     	method m;
     	//aggiungo self alla classe corrente
-    	simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, this.name);
-    	
+    	simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, this.name); 
     	while(features.hasMoreElements()){
     		Feature f=(Feature)features.nextElement();
     		if(f instanceof attr){

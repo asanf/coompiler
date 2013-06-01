@@ -213,6 +213,12 @@ class ClassTable {
 		graph.addEdge(Int_class, Object_class);
 		graph.addEdge(Str_class, Object_class);
 		graph.addEdge(Bool_class, Object_class);
+		
+		Object_class.buildSymbolTable(this);
+		IO_class.buildSymbolTable(this);
+		Bool_class.buildSymbolTable(this);
+		Int_class.buildSymbolTable(this);
+		Str_class.buildSymbolTable(this);
 	    
     
     }
@@ -340,7 +346,7 @@ class ClassTable {
     	class_c curr = this.lookup(class_name);
     	
     	while(!(curr = lookup(curr.parent)).name.equals(TreeConstants.Object_)){
-    		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
+       		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
     	}
     	return toReturn;
     	
