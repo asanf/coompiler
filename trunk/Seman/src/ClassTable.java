@@ -242,10 +242,10 @@ class ClassTable {
 		while(class_enum.hasMoreElements()){
 			class_c cl=(class_c)class_enum.nextElement();
 			
-			if(cl.name.str.equals(TreeConstants.Int.str)
-					|| cl.name.str.equals(TreeConstants.Bool.str)
-					|| cl.name.str.equals(TreeConstants.Str.str)
-					|| cl.name.str.equals(TreeConstants.SELF_TYPE.str)
+			if(cl.name.equals(TreeConstants.Int.str)
+					|| cl.name.equals(TreeConstants.Bool.str)
+					|| cl.name.equals(TreeConstants.Str.str)
+					|| cl.name.equals(TreeConstants.SELF_TYPE.str)
 			)
 				semantError(cl).println("Redefinition of basic class " + cl.name);
 			
@@ -253,7 +253,7 @@ class ClassTable {
 				semantError(cl).println("Class " + cl.name + " was previously defined.");
 			
 			else {
-				if(cl.name.str.equals("Main"))	//controllo se esiste una classe Main
+				if(cl.name.equals(TreeConstants.Main))	//controllo se esiste una classe Main
 					main_flag=true;
 				graph.addVertex(cl);
 			}
@@ -267,10 +267,10 @@ class ClassTable {
 		class_c p;
 		for (class_c c : vertices) {
 			if(!c.name.equals(TreeConstants.Object_)){
-				if(c.parent.str.equals(TreeConstants.Int.str)
-						|| c.parent.str.equals(TreeConstants.Bool.str)
-						|| c.parent.str.equals(TreeConstants.Str.str)
-						|| c.parent.str.equals(TreeConstants.SELF_TYPE.str)
+				if(c.parent.equals(TreeConstants.Int.str)
+						|| c.parent.equals(TreeConstants.Bool.str)
+						|| c.parent.equals(TreeConstants.Str.str)
+						|| c.parent.equals(TreeConstants.SELF_TYPE.str)
 				)
 					semantError(c).println("Class " + c.name + " cannot inherits class " + c.parent);
 				else if((p = graph.findVertex(c.parent)) == null)
