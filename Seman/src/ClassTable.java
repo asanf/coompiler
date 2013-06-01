@@ -28,10 +28,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
+
 import org.jgrapht.graph.SimpleDirectedGraph;
 import org.jgrapht.graph.ClassBasedEdgeFactory;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 
 /** This class may be used to contain the semantic information such as
@@ -209,17 +211,11 @@ class ClassTable {
 		graph.addVertex(Bool_class);
 		graph.addVertex(Int_class);
 		graph.addVertex(Str_class);
-		graph.addEdge(IO_class, Object_class);
-		graph.addEdge(Int_class, Object_class);
-		graph.addEdge(Str_class, Object_class);
-		graph.addEdge(Bool_class, Object_class);
-		
-		Object_class.buildSymbolTable(this);
-		IO_class.buildSymbolTable(this);
-		Bool_class.buildSymbolTable(this);
-		Int_class.buildSymbolTable(this);
-		Str_class.buildSymbolTable(this);
-	    
+			
+		graph.addEdge(Object_class, IO_class);
+		graph.addEdge(Object_class, Int_class);
+		graph.addEdge(Object_class, Str_class);
+		graph.addEdge(Object_class, Bool_class);
     
     }
 
@@ -236,6 +232,8 @@ class ClassTable {
 	
 	//inserisco le classi predefinite
 	installBasicClasses();
+	
+	// costruisco le tabelle dei simboli
 	
 	//inserisco le classi nel grafo
 		Enumeration class_enum = cls.getElements();
@@ -276,11 +274,12 @@ class ClassTable {
 				else if((p = graph.findVertex(c.parent)) == null)
 					semantError(c).println("Class " + c.name + " inherits from undefined class " + c.parent);
 				else
-					graph.addEdge(c, p);
+					graph.addEdge(p, c);
 			}
 		}
-		
 		checkCycles();
+		buildSymbolTables();
+
     }
     
     
@@ -297,7 +296,7 @@ class ClassTable {
     	return true;
     }
     
-   
+      
     
     public class_c lookup(AbstractSymbol name){
     	return graph.findVertex(name);
@@ -340,19 +339,125 @@ class ClassTable {
     public Feature isInherited(AbstractSymbol class_name, AbstractSymbol formal_name, SymbolTable.Kind kind){
     	
     	Feature toReturn = null;
-    	
+    	    	
     	if(class_name.equals(TreeConstants.Object_))
     		return toReturn;
     	
     	class_c curr = this.lookup(class_name);
     	
-    	while(!(curr = lookup(curr.parent)).name.equals(TreeConstants.Object_)){
-       		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
-    	}
+    	
+    	 	
+    	do {
+    		curr = lookup(curr.parent);
+    
+    		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
+    		if(toReturn != null)
+    			return toReturn;
+    	
+    	}while(!curr.name.equals(TreeConstants.Object_));
+    	
+    	
     	return toReturn;
     	
     }
     
+    
+    public void buildSymbolTables(){
+    	TopologicalOrderIterator<class_c, DefaultEdge> it = new TopologicalOrderIterator<class_c, DefaultEdge>(graph);
+    	
+    	while(it.hasNext()){
+    		class_c current = it.next();
+    		buildSymbolTable(current);
+    	}
+    }
+    
+    
+    private void buildSymbolTable(class_c cl){
+    	Features fl=cl.getFeatures();
+    	Enumeration features=fl.getElements();
+    	attr a;
+    	method m;
+    	//aggiungo self alla classe corrente
+    	cl.simboli.addId(TreeConstants.self, SymbolTable.Kind.OBJECT, TreeConstants.SELF_TYPE);
+    	cl.simboli.addId(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT, cl.name);
+    	while(features.hasMoreElements()){
+    		Feature f=(Feature)features.nextElement();
+    		if(f instanceof attr){
+    			a=(attr)f;
+    			Object s=cl.simboli.lookup(a.name, SymbolTable.Kind.OBJECT);
+    			if(s!=null){
+    				if(a.name.equals(TreeConstants.self))
+    					semantError().println(a.lineNumber + ": /'self'/ cannot be the name of attribute.");
+    				else //attributo già dichiarato
+    					semantError().println(a.lineNumber + "attribute " + a.name + "is multiply defined.");
+    			}
+    			else{
+    				attr in_a=(attr)isInherited(cl.name, a.name, SymbolTable.Kind.OBJECT);
+    				if(in_a!=null){
+    					//attributo ereditato, quindi non ridefinibile
+    					semantError().println(a.lineNumber + ": Attribute " + a.name + "is an attribute of an inherited class.");
+    				}
+    				else //aggiungo l'attributo alla tabella dei simobli della classe
+    					
+    					cl.simboli.addId(a.name, SymbolTable.Kind.OBJECT, a.type_decl);
+    			}
+    		}
+    		else if(f instanceof method){
+    			m=(method)f;
+    			method s=(method)cl.simboli.lookup(m.name, SymbolTable.Kind.METHOD);
+    			
+    			if(s!=null){
+    				//metodo già definito
+    				semantError().println(m.lineNumber + ": Method " + m.name + "is multiply defined.");				
+    			}
+    			else{
+    				method in_m=(method)isInherited(cl.name, m.name, SymbolTable.Kind.METHOD);
+    				if(in_m!=null){
+    					//metodo ereditato, quindi posso sovrascriverlo ma non sovraccaricarlo
+    					
+    					//controllo tipo di ritorno
+    					if(!(in_m.return_type.equals(m.return_type))){
+    						semantError().println(m.lineNumber + ": in redefinited method " + m.name + ", return type " + m.return_type + " is different from original return type " + in_m.return_type);
+    						break;
+    					}
+    					else{ //controllo il numero di formal poi il tipo
+    						Formals mf=m.formals;
+    						Formals in_mf=in_m.formals;
+    						Enumeration m_formals=mf.getElements();
+    						Enumeration in_mf_formals=mf.getElements();
+    						boolean flag_type=true;
+    						boolean flag_mf=m_formals.hasMoreElements();
+    						boolean flag_in_mf=in_mf_formals.hasMoreElements();
+    						
+    						if(flag_mf && flag_in_mf){
+    							do{
+        							formalc f1=(formalc)m_formals.nextElement();
+        							formalc f2=(formalc)in_mf_formals.nextElement();
+        							
+        							if(!(f1.type_decl.equals(f2.type_decl))){
+        								// tipo dei parametri non esatto
+        								flag_type=false;
+        							}
+        								
+        							flag_mf=m_formals.hasMoreElements();
+            						flag_in_mf=in_mf_formals.hasMoreElements();
+        						}while(flag_mf && flag_in_mf);
+    						}
+    						if(flag_mf!=flag_in_mf){//uno dei due aveva ancora parametri formali
+    							semantError().println(m.lineNumber + ": Incompatible number of formal parameters in redefined method " + m.name + ".");
+    						}
+    						else if(!flag_type){ //incompatibilità di tipo dei parametri
+    							semantError().println(m.lineNumber + ": In redefined method " + m.name + ", parameter type " + m.return_type + " is different from original type " + in_m.return_type + ".");
+    						}    						
+    					}    					
+    				}
+    				else //nuovo metodo da aggiungere alla tabella dei simboli
+    					cl.simboli.addId(m.name, SymbolTable.Kind.METHOD, m);
+    			}
+    			
+    		}
+    	}
+    }
 
     /** Prints line number and file name of the given class.
      *
