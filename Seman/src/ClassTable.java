@@ -307,7 +307,6 @@ class ClassTable {
     	class_c desc = lookup(descendant);
     	class_c anc = lookup(ancestor);
     	class_c Object_class = graph.findVertex(TreeConstants.Object_);
-    	
     	if( desc == null || anc == null)
     		return false;
     	
@@ -317,8 +316,9 @@ class ClassTable {
     	if(desc.parent.equals(anc.name))
     		return true;
     	
-    	while(!desc.equals(Object_class)){
-    		desc = lookup(desc.name);
+    	while(!desc.name.equals(TreeConstants.Object_)){
+ 
+    		desc = lookup(desc.parent);
     		if(desc.name.equals(anc.name))
     			return true;
     	}
@@ -328,9 +328,13 @@ class ClassTable {
     public AbstractSymbol nearestCommonAncestor(AbstractSymbol first, AbstractSymbol second){
     	class_c f = lookup(first);
     	class_c s = lookup(second);
+    	boolean result;
     	
     	
-    	while(!isAncestor(f.name, s.name)) f = lookup(f.parent);
+    	while(!(result = isAncestor(f.name, s.name))){
+    		
+    		f = lookup(f.parent);
+    	}
     	
     	return f.name;
     }
