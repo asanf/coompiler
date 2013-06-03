@@ -293,10 +293,6 @@ public class Checker implements Visitor {
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(sd.expr, table);
 		AbstractSymbol expr_class_name = t0;
-		AbstractSymbol returnType = null;
-		Enumeration<formalc> formali = null;
-		boolean confrontabili = true;
-		method m;
 		
 		if(t0.equals(TreeConstants.SELF_TYPE))
 			expr_class_name = (AbstractSymbol) scope.lookup(t0, SymbolTable.Kind.OBJECT);
@@ -307,47 +303,11 @@ public class Checker implements Visitor {
 
 		}
 		class_c dispatch_class = cTable.lookup(sd.type_name);
-				
-		m = (method)dispatch_class.simboli.lookup(sd.name, SymbolTable.Kind.METHOD);
+	
+		t0 = checkClassMethod(dispatch_class, sd.name, sd.actual, table);
 		
-		if( m == null) m = (method) cTable.isInherited(expr_class_name, sd.name, SymbolTable.Kind.METHOD);
-		if( m == null)
-			cTable.semantError().println(sd.lineNumber + ": dispatch to undefined method " + sd.name);
-		else {
-			formali = (Enumeration<formalc>) m.formals.getElements();
-			if(!(sd.actual.getLength() == m.formals.getLength())){
-				cTable.semantError().println(sd.lineNumber + ": il metodo " + sd.name + " è invocato con un errato numero di parametri");
-				confrontabili = false;
-			}
-		}
-		
-		Enumeration attuali = sd.actual.getElements();
-		AbstractSymbol actual_type, formal_type;
-		//TODO ma actual type esiste?
-		while(attuali.hasMoreElements()){
-			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
-			
-			if(confrontabili && (formali != null)){
-				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
-				if(!cTable.isAncestor(formal_type, actual_type))
-					cTable.semantError().println(sd.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
-			}
-			
-		}
-		
-		if(m != null){
-			if(m.return_type.equals(TreeConstants.SELF_TYPE)){
-				sd.set_type(t0);
-				return t0;
-			}
-				
-			else {
-				sd.set_type(m.return_type);
-				return m.return_type;
-			}
-		}
-		sd.set_type(TreeConstants.Object_);
-		return TreeConstants.Object_;
+		sd.set_type(t0);
+		return t0;
 		
 	}
 
@@ -356,9 +316,6 @@ public class Checker implements Visitor {
 		SymbolTable scope = (SymbolTable) table;
 		AbstractSymbol t0 = (AbstractSymbol) visit(d.expr, table);
 		AbstractSymbol class_name = t0;
-		Enumeration<formalc> formali = null;
-		boolean confrontabili = false;
-		method m = null;
 		class_c dispatch_class;
 		if(t0.equals(TreeConstants.SELF_TYPE))
 			class_name = (AbstractSymbol)scope.lookup(t0, SymbolTable.Kind.OBJECT);
@@ -366,53 +323,62 @@ public class Checker implements Visitor {
 		
 		dispatch_class = cTable.lookup(class_name);
 		System.err.println("dispatch_class = " + class_name);
-		if(dispatch_class != null){
-			m = (method)dispatch_class.simboli.lookup(d.name, SymbolTable.Kind.METHOD);
-			if( m == null) {
-				System.err.println("Il metodo è null, quindi lo cerco fra gli antenati");
-				m = (method) cTable.isInherited(class_name, d.name, SymbolTable.Kind.METHOD);
-			}
-			if( m == null){
-				System.err.println(class_name + " " + d.name + " " + m);
-				cTable.semantError().println(d.lineNumber + ": dispatch to undefined method " + d.name);
-			}
-			if(m!=null){
-				formali = (Enumeration<formalc>) m.formals.getElements();
-				if(!(d.actual.getLength() == m.formals.getLength())){
-					cTable.semantError().println(d.lineNumber + ": il metodo " + d.name + " è invocato con un errato numero di parametri");
-					confrontabili = false;
-				} else {
-					if(d.actual.getLength() != 0)
-						confrontabili = true;
-				}
-				
-			}
-		}else{
-			cTable.semantError(dispatch_class).println(d.lineNumber + ": il tipo " + class_name);
-		}
-		
-		
-		
-		Enumeration attuali = d.actual.getElements();
-		AbstractSymbol actual_type, formal_type;
-		//TODO ma actual type esiste?
-		while(attuali.hasMoreElements()){
-			actual_type = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
-			if(confrontabili){
-				formal_type = (AbstractSymbol)(formali.nextElement()).type_decl;
-				if(!cTable.isAncestor(formal_type, actual_type))
-					cTable.semantError().println(d.lineNumber + ": tipi non compatibili: " + actual_type + ". " + formal_type);
-			}
-		}
-		
-		if(m!= null && !m.return_type.equals(TreeConstants.SELF_TYPE)){
-				d.set_type(m.return_type);
-				return m.return_type;			
-		}
+		t0 = checkClassMethod(dispatch_class, d.name, d.actual, table);
 		d.set_type(t0);
-		System.err.println("Sono arrivato alla fine");
 		return t0;
 	}
+	
+	private AbstractSymbol checkClassMethod(class_c cl, AbstractSymbol methodName, Expressions actual, Object table){
+		method m;
+		AbstractSymbol toReturn = cl.name;
+		boolean confrontabili = true;
+		Enumeration<formalc> formali = null;
+		Enumeration attuali;
+		
+		if(cl == null){
+			m = null;
+			cTable.semantError(cl).println(actual.lineNumber + ": il tipo " + cl.name);
+		} else {
+			m = (method)cl.simboli.lookup(methodName, SymbolTable.Kind.METHOD);
+			if( m == null) m =(method) cTable.isInherited(cl.name, methodName, SymbolTable.Kind.METHOD);
+			if( m == null){
+				cTable.semantError().println(actual.lineNumber + ": dispatch to undefined method " + methodName);
+				confrontabili = false;
+				toReturn = cl.name;
+			}else{
+				if(!m.return_type.equals(TreeConstants.SELF_TYPE)){
+					toReturn = m.return_type;
+				}
+			}
+		}
+		
+		if(confrontabili){
+			if(m.formals.getLength() != actual.getLength()){
+				cTable.semantError(cl).println("Il metodo " + methodName + " è invocato con un numero errato di parametri");
+				confrontabili = false;
+			}else{
+				formali = (Enumeration<formalc>)m.formals.getElements();
+			}
+			if(actual.getLength() == 0){
+				confrontabili = false;
+			}
+		}
+		
+		attuali = actual.getElements();
+		AbstractSymbol actualType, formalType;
+			
+		
+		while( attuali.hasMoreElements()){
+			actualType = (AbstractSymbol) visit((Expression)attuali.nextElement(), table);
+			if(confrontabili){
+				formalType = formali.nextElement().type_decl;
+				if(!cTable.isAncestor(formalType, actualType))
+					cTable.semantError().println(actual.lineNumber + ": tipi non compatibili: " + actualType + ". " + formalType);
+			}
+		}
+		return toReturn;
+	}
+	
 
 	@Override
 	public Object visit(cond c, Object table) {
@@ -701,5 +667,7 @@ public class Checker implements Visitor {
 		return result;
 	}
 	
+	
+
 	private ClassTable cTable;
 }

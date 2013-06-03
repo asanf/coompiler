@@ -232,9 +232,7 @@ class ClassTable {
 	
 	//inserisco le classi predefinite
 	installBasicClasses();
-	
-	// costruisco le tabelle dei simboli
-	
+
 	//inserisco le classi nel grafo
 		Enumeration class_enum = cls.getElements();
 		while(class_enum.hasMoreElements()){
@@ -278,6 +276,8 @@ class ClassTable {
 			}
 		}
 		checkCycles();
+		
+		// costruisco le tabelle dei simboli
 		buildSymbolTables();
 
     }
