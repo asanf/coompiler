@@ -278,11 +278,14 @@ public class Checker implements Visitor {
 		// cerco l'id nella symbol table 
 		AbstractSymbol var_type = (AbstractSymbol)scope.lookup(a.name, SymbolTable.Kind.OBJECT);
 		
-		// se non esiste stampo l'errore
-		if(var_type == null)
-			cTable.semantError().println(a.lineNumber + ": assignment to undeclared variable " + a.name);
+		// se non esiste lo cerco fra gli antenati
+		if(var_type == null){
+			AbstractSymbol current_class = (AbstractSymbol)scope.lookup(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT);
+			var_type = (AbstractSymbol)cTable.isInherited(current_class, a.name, SymbolTable.Kind.OBJECT);
+			if(var_type == null)
+				cTable.semantError().println(a.lineNumber + ": assignment to undeclared variable " + a.name);
 		// errore se sto assegnando a self
-		else if(var_type.equals(TreeConstants.self))
+		}else if(var_type.equals(TreeConstants.self))
 			cTable.semantError().println(a.lineNumber + ": cannot assign to \'self\'");
 		// valuto l'espressione e recupero il suo tipo
 		AbstractSymbol expr_type = (AbstractSymbol) visit(a.expr,table);
@@ -683,12 +686,18 @@ public class Checker implements Visitor {
 		 * dell'id nello scope corrente: se l'id esiste restituisco il suo tipo,
 		 * altrimenti no_type
 		 */
+		
+		
 		SymbolTable scope = (SymbolTable) table;
+		AbstractSymbol current_class = (AbstractSymbol)scope.lookup(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT);
 		AbstractSymbol result = (AbstractSymbol)scope.lookup(o.name, SymbolTable.Kind.OBJECT);
 		if(result == null){
-			cTable.semantError().println(o.lineNumber + ": " + o.name + " non è stato dichiarato.");
-			o.set_type(TreeConstants.No_type);
-			return TreeConstants.No_type;
+			result = (AbstractSymbol)cTable.isInherited(current_class, o.name, SymbolTable.Kind.OBJECT);
+			if(result == null){
+				cTable.semantError().println(o.lineNumber + ": " + o.name + " non è stato dichiarato.");
+				o.set_type(TreeConstants.No_type);
+				return TreeConstants.No_type;
+			}
 		}
 		o.set_type(result);
 		return result;

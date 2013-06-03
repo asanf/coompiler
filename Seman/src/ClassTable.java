@@ -340,9 +340,9 @@ class ClassTable {
     }
     
     
-    public Feature isInherited(AbstractSymbol class_name, AbstractSymbol formal_name, SymbolTable.Kind kind){
+    public Object isInherited(AbstractSymbol class_name, AbstractSymbol formal_name, SymbolTable.Kind kind){
     	
-    	Feature toReturn = null;
+    	Object toReturn = null;
     	    	
     	if(class_name.equals(TreeConstants.Object_))
     		return toReturn;
@@ -353,8 +353,8 @@ class ClassTable {
     	 	
     	do {
     		curr = lookup(curr.parent);
-    
-    		toReturn = (Feature)curr.simboli.lookup(formal_name, kind);
+    		
+    		toReturn = curr.simboli.lookup(formal_name, kind);
     		if(toReturn != null)
     			return toReturn;
     	
