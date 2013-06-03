@@ -34,11 +34,8 @@ class Semant {
     public static void main(String[] args) {
 	args = Flags.handleFlags(args);
 	try {
-	    //ASTLexer lexer = new ASTLexer(new InputStreamReader(System.in));
-		JFileChooser fc = new JFileChooser();
-		fc.showOpenDialog(null);
-		ASTLexer lexer = new ASTLexer(new FileInputStream(fc.getSelectedFile()));
-	    AstCup parser = new AstCup(lexer);
+	    ASTLexer lexer = new ASTLexer(new InputStreamReader(System.in));
+		AstCup parser = new AstCup(lexer);
 	    Object result = parser.parse().value;
 	    ((Program)result).semant();
 	    ((Program)result).dump_with_types(System.out, 0);
