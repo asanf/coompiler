@@ -1,5 +1,7 @@
 import java.util.Enumeration;
+import java.util.Set;
 //TODO anche in caso di errore bisogna restituire il tipo corretto
+import java.util.HashSet;
 
 public class Checker implements Visitor {
 	
@@ -102,18 +104,40 @@ public class Checker implements Visitor {
 		AbstractSymbol inferred_type = (AbstractSymbol)visit(m.expr, scope);
 		scope.exitScope();
 		
-		if(m.return_type.equals(TreeConstants.SELF_TYPE)){
-			AbstractSymbol mySelf = (AbstractSymbol)scope.lookup(m.return_type, SymbolTable.Kind.OBJECT);
-			if(mySelf.equals(inferred_type)){
-				m.expr.set_type(TreeConstants.SELF_TYPE);
-				return m.return_type;
-			}
+		AbstractSymbol return_type = m.return_type;
+		
+		/*
+		 * Se i due sono uguali esco direttamente
+		 */
+		if(m.return_type.equals(inferred_type))
+			return return_type;
+			
+		
+		/*
+		 * Se sono diversi, devo considerare il caso in cui uno dei due sia SELF_TYPE
+		 */
+		if(return_type.equals(TreeConstants.SELF_TYPE) || inferred_type.equals(TreeConstants.SELF_TYPE)){
+			// se uno dei due lo è in ogni caso devo recuperare il "valore attuale" di self_type
+			AbstractSymbol mySelf = (AbstractSymbol)scope.lookup(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT);
+			
+			
+			// a seconda se uno o entrambi sono SELF_TYPE, li aggiorno
+			if(return_type.equals(TreeConstants.SELF_TYPE))
+				return_type = mySelf;
+			
+			if(inferred_type.equals(TreeConstants.SELF_TYPE))
+				inferred_type = mySelf;
 		}
 		
-		if(!inferred_type.equals(m.return_type) && !cTable.isAncestor(m.return_type, inferred_type)){
+		// do errore se inferred_type non è compatibile con return_type
+		if(!cTable.isAncestor(return_type, inferred_type)){
 			cTable.semantError().println(m.lineNumber + ": inferred return type " + inferred_type + " of method " + m.name + " does not conform to declared return type " + m.return_type);
 		}
+		
+		// restituisco m.return_type perché sicuramente non è stato modificato
+		// (se era SELF_TYPE è rimasto SELF_TYPE
 		return m.return_type;
+		
 	}
 	
 	@Override
@@ -218,6 +242,8 @@ public class Checker implements Visitor {
 		//TODO restituire SELF_TYPE se tutti i branch danno self_type
 		SymbolTable scope = (SymbolTable)table;
 		Enumeration cases = case_list.getElements();
+		Set<AbstractSymbol> tipi = new HashSet<AbstractSymbol>();
+		boolean all_self_type = true;
 		AbstractSymbol b_type;
 		AbstractSymbol common_type;
 		AbstractSymbol self_type = (AbstractSymbol) scope.lookup(TreeConstants.SELF_TYPE, SymbolTable.Kind.OBJECT);
@@ -225,34 +251,33 @@ public class Checker implements Visitor {
 		branch b=(branch)cases.nextElement();
 		
 		common_type=(AbstractSymbol)visit(b,table);
+		
 		if(common_type.equals(TreeConstants.SELF_TYPE))
 			common_type = self_type;
-		//controllo che le variabili dichiarate in ogni branch siano tutte distinte
-		Enumeration t_cases=case_list.getElements();
-		t_cases.nextElement(); // il confronto deve partire dal branch successivo a b
-		while(t_cases.hasMoreElements()){
-			branch t_case=(branch)t_cases.nextElement();
-			if(b.type_decl.equals(t_case.type_decl))
-				cTable.semantError().println(t_case.lineNumber + ": Duplicate " + t_case.type_decl + " in case statement.");
-		}
+		else
+			all_self_type = false;
+		
+		tipi.add(b.type_decl);
+		
 		while(cases.hasMoreElements()){
+			
 			b=(branch)cases.nextElement();
 			b_type=(AbstractSymbol)visit(b,table);
+		
 			if(b_type.equals(TreeConstants.SELF_TYPE))
 				b_type = self_type;
-			if(!(common_type.equals(TreeConstants.Object_)))
-				common_type=cTable.nearestCommonAncestor(common_type, b_type);
-			//controllo che le variabili dichiarate in ogni branch siano tutte distinte
-			t_cases=case_list.getElements();
-			t_cases.nextElement();
-			while(t_cases.hasMoreElements()){
-				AbstractSymbol t_case=((branch)t_cases.nextElement()).type_decl;
-				if(b_type.equals(t_case))
-					cTable.semantError().println(b.lineNumber + ": Duplicate " + b_type + " in case statement.");
-			}
+			else
+				all_self_type = false;
 			
+			common_type = cTable.nearestCommonAncestor(common_type, b_type);
+			
+			if(tipi.contains(b.type_decl))
+				cTable.semantError().println(b.lineNumber + ": Duplicate " + b_type + " in case statement.");
+			else
+				tipi.add(b.type_decl);
 		}
 		
+		if(all_self_type) return TreeConstants.SELF_TYPE;
 		return common_type;
 	}
 
