@@ -444,7 +444,10 @@ public class Checker implements Visitor {
 		if(!pred_type.equals(TreeConstants.Bool))
 			cTable.semantError().println(c.lineNumber + ": Condizione if : " + pred_type + " invece di Bool");
 		
-		
+		if(then_type.equals(TreeConstants.SELF_TYPE) && else_type.equals(TreeConstants.SELF_TYPE)){
+			c.set_type(TreeConstants.SELF_TYPE);
+			return TreeConstants.SELF_TYPE;
+		}
 		
 		
 		// il tipo dell'if è il primo antenato comune
