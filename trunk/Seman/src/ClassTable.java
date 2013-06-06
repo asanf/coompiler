@@ -243,10 +243,10 @@ class ClassTable {
 					|| cl.name.equals(TreeConstants.Str.str)
 					|| cl.name.equals(TreeConstants.SELF_TYPE.str)
 			)
-				semantError(cl).println("Redefinition of basic class " + cl.name);
+				semantError(cl).println(cl.lineNumber + ": Redefinition of basic class " + cl.name);
 			
 			else if(graph.findVertex(cl.name) != null)
-				semantError(cl).println("Class " + cl.name + " was previously defined.");
+				semantError(cl).println(cl.lineNumber + ": Class " + cl.name + " was previously defined.");
 			
 			else {
 				if(cl.name.equals(TreeConstants.Main))	//controllo se esiste una classe Main
@@ -268,9 +268,9 @@ class ClassTable {
 						|| c.parent.equals(TreeConstants.Str.str)
 						|| c.parent.equals(TreeConstants.SELF_TYPE.str)
 				)
-					semantError(c).println("Class " + c.name + " cannot inherits class " + c.parent);
+					semantError(c).println(c.lineNumber + ": Class " + c.name + " cannot inherits class " + c.parent);
 				else if((p = graph.findVertex(c.parent)) == null)
-					semantError(c).println("Class " + c.name + " inherits from undefined class " + c.parent);
+					semantError(c).println(c.lineNumber + ": Class " + c.name + " inherits from undefined class " + c.parent);
 				else
 					graph.addEdge(p, c);
 			}
@@ -291,7 +291,7 @@ class ClassTable {
     	if(bad_nodes.isEmpty())
     		return false;
     	for (class_c cl : bad_nodes) {
-			semantError().println("Class " + cl.name + ", or an ancestor of " + cl.name + ", is involved in an inheritance cycle.");
+			semantError().println(cl.lineNumber + ": Class " + cl.name + ", or an ancestor of " + cl.name + ", is involved in an inheritance cycle.");
 		}
     	return true;
     }
