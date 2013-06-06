@@ -263,10 +263,10 @@ class ClassTable {
 		class_c p;
 		for (class_c c : vertices) {
 			if(!c.name.equals(TreeConstants.Object_)){
-				if(c.parent.equals(TreeConstants.Int.str)
-						|| c.parent.equals(TreeConstants.Bool.str)
-						|| c.parent.equals(TreeConstants.Str.str)
-						|| c.parent.equals(TreeConstants.SELF_TYPE.str)
+				if(c.parent.equals(TreeConstants.Int)
+						|| c.parent.equals(TreeConstants.Bool)
+						|| c.parent.equals(TreeConstants.Str)
+						|| c.parent.equals(TreeConstants.SELF_TYPE)
 				)
 					semantError(c).println(c.lineNumber + ": Class " + c.name + " cannot inherits class " + c.parent);
 				else if((p = graph.findVertex(c.parent)) == null)
