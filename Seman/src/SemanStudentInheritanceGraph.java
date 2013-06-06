@@ -9,9 +9,9 @@ import java.util.Set;
  * 
  *
  */
-public class InheritanceGraph extends SimpleDirectedGraph<class_c, DefaultEdge>{
+public class SemanStudentInheritanceGraph extends SimpleDirectedGraph<class_c, DefaultEdge>{
 
-	public InheritanceGraph(){
+	public SemanStudentInheritanceGraph(){
 		super(DefaultEdge.class);
 	}
 	

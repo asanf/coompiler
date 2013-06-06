@@ -42,7 +42,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 class ClassTable {
     private int semantErrors;
     private PrintStream errorStream;
-    private InheritanceGraph graph;
+    private SemanStudentInheritanceGraph graph;
     private ArrayList<class_c> badClass;
     
 
@@ -228,7 +228,7 @@ class ClassTable {
 	Boolean main_flag = false;
 	
 	/* fill this in */
-	graph = new InheritanceGraph();
+	graph = new SemanStudentInheritanceGraph();
 	
 	//inserisco le classi predefinite
 	installBasicClasses();

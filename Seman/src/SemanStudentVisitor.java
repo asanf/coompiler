@@ -1,5 +1,5 @@
 
-public interface Visitor {
+public interface SemanStudentVisitor {
 
 	public Object visit(programc program, Object table);
 	public Object visit(Classes class_list, Object table);

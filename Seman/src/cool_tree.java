@@ -277,7 +277,7 @@ class programc extends Program {
 	
 	/* some semantic analysis code may go here */
 	
-	Checker check = new Checker(classTable);
+	SemanStudentChecker check = new SemanStudentChecker(classTable);
 	check.visit(this, null);
 	
 
