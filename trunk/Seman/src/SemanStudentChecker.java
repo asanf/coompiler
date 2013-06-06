@@ -3,9 +3,9 @@ import java.util.Set;
 //TODO anche in caso di errore bisogna restituire il tipo corretto
 import java.util.HashSet;
 
-public class Checker implements Visitor {
+public class SemanStudentChecker implements SemanStudentVisitor {
 	
-	public Checker(ClassTable class_table)
+	public SemanStudentChecker(ClassTable class_table)
 	{
 		this.cTable = class_table;
 	}
