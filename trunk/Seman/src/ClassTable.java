@@ -277,6 +277,12 @@ class ClassTable {
 		}
 		checkCycles();
 		
+		
+		if (errors()) {
+		    System.err.println("Compilation halted due to static semantic errors.");
+		    System.exit(1);
+		}
+		
 		// costruisco le tabelle dei simboli
 		buildSymbolTables();
 
@@ -391,15 +397,14 @@ class ClassTable {
     			Object s=cl.simboli.lookup(a.name, SymbolTable.Kind.OBJECT);
     			if(s!=null){
     				if(a.name.equals(TreeConstants.self))
-    					semantError().println(a.lineNumber + ": /'self'/ cannot be the name of attribute.");
+    					semantError().println(a.lineNumber + ": 'self' cannot be the name of attribute.");
     				else //attributo già dichiarato
     					semantError().println(a.lineNumber + "attribute " + a.name + "is multiply defined.");
     			}
     			else{
-    				attr in_a=(attr)isInherited(cl.name, a.name, SymbolTable.Kind.OBJECT);
-    				if(in_a!=null){
+    				if(isInherited(cl.name, a.name, SymbolTable.Kind.OBJECT)!=null){
     					//attributo ereditato, quindi non ridefinibile
-    					semantError().println(a.lineNumber + ": Attribute " + a.name + "is an attribute of an inherited class.");
+    					semantError().println(a.lineNumber + ": Attribute " + a.name + " is an attribute of an inherited class.");
     				}
     				else //aggiungo l'attributo alla tabella dei simobli della classe
     					
@@ -416,6 +421,7 @@ class ClassTable {
     			}
     			else{
     				method in_m=(method)isInherited(cl.name, m.name, SymbolTable.Kind.METHOD);
+    				
     				if(in_m!=null){
     					//metodo ereditato, quindi posso sovrascriverlo ma non sovraccaricarlo
     					
@@ -428,18 +434,22 @@ class ClassTable {
     						Formals mf=m.formals;
     						Formals in_mf=in_m.formals;
     						Enumeration m_formals=mf.getElements();
-    						Enumeration in_mf_formals=mf.getElements();
+    						Enumeration in_mf_formals=in_mf.getElements();
     						boolean flag_type=true;
+    						formalc f1, f2, err_f1=null, err_f2=null;
     						boolean flag_mf=m_formals.hasMoreElements();
     						boolean flag_in_mf=in_mf_formals.hasMoreElements();
     						
     						if(flag_mf && flag_in_mf){
     							do{
-        							formalc f1=(formalc)m_formals.nextElement();
-        							formalc f2=(formalc)in_mf_formals.nextElement();
+        							f1=(formalc)m_formals.nextElement();
+        							f2=(formalc)in_mf_formals.nextElement();
         							
+        														
         							if(!(f1.type_decl.equals(f2.type_decl))){
         								// tipo dei parametri non esatto
+        								err_f1=f1;
+        								err_f2=f2;
         								flag_type=false;
         							}
         								
@@ -451,7 +461,7 @@ class ClassTable {
     							semantError().println(m.lineNumber + ": Incompatible number of formal parameters in redefined method " + m.name + ".");
     						}
     						else if(!flag_type){ //incompatibilità di tipo dei parametri
-    							semantError().println(m.lineNumber + ": In redefined method " + m.name + ", parameter type " + m.return_type + " is different from original type " + in_m.return_type + ".");
+    							semantError().println(m.lineNumber + ": In redefined method " + m.name + ", parameter type " + err_f1.type_decl + " is different from original type " + err_f2.type_decl + ".");
     						}    						
     					}    					
     				}

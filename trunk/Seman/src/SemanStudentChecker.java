@@ -22,7 +22,7 @@ public class SemanStudentChecker implements SemanStudentVisitor {
 			if(c.name.equals(TreeConstants.Main)){
 				Object f=c.simboli.lookup(TreeConstants.main_meth, SymbolTable.Kind.METHOD);
 				if(f==null)
-					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main" + c.simboli);
+					cTable.semantError(c).println(c.lineNumber + ": No \'main\' method in class Main");
 					
 			}
 			
