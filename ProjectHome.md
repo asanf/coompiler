@@ -1,0 +1,1 @@
+Implementation of a semant analyzer for the cool programming language. Assignment for the Compiler class.
