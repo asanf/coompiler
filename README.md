@@ -1,5 +1,5 @@
 # coompiler
-A Semant developed for the Compiler course, writen in Java for the Cool programming language.
+Part of a compiler for the cool programming language written in Java.
 
 ## About
 These are the first three component of a compiler for the Cool programming language, developed for the Compilers
